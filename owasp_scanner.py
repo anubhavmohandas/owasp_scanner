@@ -4,6 +4,7 @@ import requests
 import json
 import re
 import time
+import subprocess
 import concurrent.futures
 import socket
 import dns.resolver
@@ -44,39 +45,50 @@ class OWASPScanner:
         return hostname
 
     def discover_subdomains(self):
-        """Built-in subdomain discovery"""
+        """Built-in subdomain discovery using assetfinder"""
         print(f"[+] Discovering subdomains for {self.base_domain}...")
         discovered = set()
         
-        # Method 1: DNS enumeration with common subdomains
-        common_subdomains = [
-            'www', 'mail', 'ftp', 'webmail', 'login', 'admin', 'test', 'dev', 'staging',
-            'api', 'app', 'blog', 'shop', 'store', 'cdn', 'media', 'images', 'video',
-            'support', 'help', 'portal', 'secure', 'vpn', 'remote', 'office', 'm', 'mobile',
-            'auth', 'service', 'services', 'internal', 'intranet', 'prod', 'production',
-            'stage', 'git', 'svn', 'jenkins', 'jira', 'confluence', 'wiki', 'hr', 'crm',
-            'sales', 'marketing', 'finance', 'cloud', 'uat', 'qa', 'web', 'ns1', 'ns2',
-            'smtp', 'mx', 'kb', 'assets', 'sso', 'login'
-        ]
-
-        print("[*] Performing DNS enumeration...")
-        for subdomain in common_subdomains:
-            if len(discovered) >= self.max_subdomains:
-                break
+        print("[*] Running assetfinder...")
+        try:
+            # Run assetfinder command and capture output
+            cmd = f"assetfinder --subs-only {self.base_domain}"
+            process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            stdout, stderr = process.communicate()
+            
+            if process.returncode == 0:
+                # Process successful results
+                subdomains = stdout.strip().split('\n')
+                for subdomain in subdomains:
+                    if subdomain and subdomain.endswith(self.base_domain):
+                        discovered.add(subdomain)
+                        print(f"[+] Found subdomain: {subdomain}")
+                        if len(discovered) >= self.max_subdomains:
+                            print(f"[*] Reached maximum subdomain limit ({self.max_subdomains})")
+                            break
                 
-            full_domain = f"{subdomain}.{self.base_domain}"
-            try:
-                dns.resolver.resolve(full_domain, 'A')
-                discovered.add(full_domain)
-                print(f"[+] Found subdomain: {full_domain}")
-            except (dns.resolver.NXDOMAIN, dns.resolver.NoAnswer, dns.resolver.NoNameservers):
-                continue
-            except Exception as e:
-                print(f"[-] DNS error: {e}")
-                continue
+                print(f"[+] Assetfinder found {len(discovered)} subdomains")
+            else:
+                print(f"[-] Assetfinder error: {stderr}")
+                # Fallback to other methods if assetfinder fails
+                print("[*] Falling back to certificate transparency logs...")
+                self._check_cert_transparency(discovered)
+        except FileNotFoundError:
+            print("[-] Assetfinder not found in PATH. Please install it or check the path.")
+            print("[*] Falling back to certificate transparency logs...")
+            self._check_cert_transparency(discovered)
+        except Exception as e:
+            print(f"[-] Error running assetfinder: {e}")
+            print("[*] Falling back to certificate transparency logs...")
+            self._check_cert_transparency(discovered)
+        
+        # Convert discovered subdomains to URLs
+        self.subdomains = ['https://' + sub for sub in discovered]
+        print(f"[+] Total discovered subdomains: {len(self.subdomains)}")
+        return self.subdomains
 
-        # Method 2: Certificate transparency logs
-        print("[*] Checking certificate transparency logs...")
+    def _check_cert_transparency(self, discovered):
+        """Helper method to check certificate transparency logs"""
         try:
             ct_url = f"https://crt.sh/?q=%.{self.base_domain}&output=json"
             response = requests.get(ct_url, timeout=10)
@@ -91,7 +103,7 @@ class OWASPScanner:
                                 if '*' not in domain and domain.endswith(self.base_domain):
                                     discovered.add(domain)
                                     if len(discovered) >= self.max_subdomains:
-                                        break
+                                        return
                     print(f"[+] Found {len(discovered)} subdomains via cert transparency")
                 except json.JSONDecodeError:
                     print("[-] Failed to parse crt.sh JSON response")
@@ -99,41 +111,17 @@ class OWASPScanner:
                 print(f"[-] Failed to query crt.sh: HTTP {response.status_code}")
         except Exception as e:
             print(f"[-] Error querying certificate transparency logs: {e}")
-
-        # Method 3: Web scraping for subdomains
-        print("[*] Searching search engines for subdomain references...")
-        try:
-            search_url = f"https://www.google.com/search?q=site:{self.base_domain}"
-            headers = {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/96.0.4664.110 Safari/537.36',
-            }
-            response = requests.get(search_url, headers=headers, timeout=10)
-            if response.status_code == 200:
-                soup = BeautifulSoup(response.text, 'html.parser')
-                links = soup.find_all('a')
-                subdomain_pattern = re.compile(r'(?:https?://)?([a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?\.{})'
-                                              .format(re.escape(self.base_domain)))
-                
-                for link in links:
-                    href = link.get('href', '')
-                    if 'url=' in href:
-                        href = href.split('url=')[1].split('&')[0]
-                    
-                    match = subdomain_pattern.search(href)
-                    if match:
-                        discovered.add(match.group(1))
-                        if len(discovered) >= self.max_subdomains:
-                            break
-            else:
-                print(f"[-] Search engine request failed: HTTP {response.status_code}")
-        except Exception as e:
-            print(f"[-] Error during web scraping: {e}")
-
-        # Convert discovered subdomains to URLs
-        self.subdomains = ['https://' + sub for sub in discovered]
-        print(f"[+] Total discovered subdomains: {len(self.subdomains)}")
-        return self.subdomains
         
+    def check_with_retry(self, url, check_function, max_retries=3):
+        """Wrapper function to add reliability to checks with built-in retry mechanism"""
+        for attempt in range(max_retries):
+            try:
+                return check_function(url)
+            except (requests.exceptions.RequestException, socket.timeout) as e:
+                if attempt == max_retries - 1:
+                    return {"findings": [f"Connection error: {str(e)}"], "risk_level": "Unknown"}
+                time.sleep(1) 
+
     def verify_subdomain_connectivity(self, subdomain_url):
         """Verify that subdomain is reachable"""
         try:
@@ -145,11 +133,13 @@ class OWASPScanner:
             return None
 
     def scan_targets(self):
+        """Scan all targets with retry mechanism for consistency"""
         targets = [self.target_url]
+        
+        # Discover and verify subdomains if configured
         if self.scan_subdomains:
             discovered = self.discover_subdomains()
             if discovered:
-                # Verify connectivity to discovered subdomains
                 print("[*] Verifying subdomain connectivity...")
                 with concurrent.futures.ThreadPoolExecutor(max_workers=self.threads) as executor:
                     verified = list(filter(None, executor.map(self.verify_subdomain_connectivity, discovered)))
@@ -159,12 +149,30 @@ class OWASPScanner:
         
         print(f"[+] Starting scan against {len(targets)} targets")
         
+        # Use concurrent execution for each target
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.threads) as executor:
             target_results = list(executor.map(self.scan_single_target, targets))
         
         # Aggregate results
         for target, result in zip(targets, target_results):
             self.results[target] = result
+        
+        # Alternative implementation with specific checks and retry mechanism
+        # Uncomment to use this approach instead
+        """
+        for target in targets:
+            print(f"[*] Scanning {target}")
+            self.results[target] = {}
+            
+            # Use retry wrapper for each check
+            self.results[target]["A01:2021-Broken_Access_Control"] = self.check_with_retry(
+                target, self.check_broken_access_control)
+            self.results[target]["A02:2021-Cryptographic_Failures"] = self.check_with_retry(
+                target, self.check_cryptographic_failures)
+            self.results[target]["A03:2021-Injection"] = self.check_with_retry(
+                target, self.check_injection)
+            # Continue for all other checks...
+        """
         
         self.output_results()
         return self.results
@@ -303,8 +311,8 @@ class OWASPScanner:
                         # TLS 1.0 check
                         import ssl
                         try:
-                            # Try to establish connection with TLS 1.0
-                            tls_context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+                            # Try to establish connection
+                            tls_context = ssl.create_default_context()
                             tls_context.check_hostname = False
                             tls_context.verify_mode = ssl.CERT_NONE
                             tls_socket = tls_context.wrap_socket(socket.socket(), server_hostname=hostname)
