@@ -182,7 +182,7 @@ This tool is designed for security professionals to assess their own systems or 
 
 ## 📜 License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+No Licence required to use this tool.
 
 ## 🤝 Contributing
 
