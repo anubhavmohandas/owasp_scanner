@@ -1,70 +1,73 @@
 # OWASP Security Scanner
 
-<div align="center">
-  <img src="https://img.shields.io/badge/Python-3.7+-blue.svg"/>
-  <img src="https://img.shields.io/badge/License-MIT-green.svg"/>
-  <img src="https://img.shields.io/badge/OWASP-2021-orange.svg"/>
-</div>
+![OWASP Security Scanner](https://img.shields.io/badge/OWASP-Security%20Scanner-blue)
+![Python 3.7+](https://img.shields.io/badge/Python-3.7%2B-green)
+![License](https://img.shields.io/badge/License-MIT-yellow)
 
-## 🛡️ Overview
+A comprehensive web application security scanner based on OWASP security guidelines. This tool helps identify common security vulnerabilities in web applications.
 
-OWASP Security Scanner is a comprehensive web vulnerability scanner designed to detect and report security issues based on the OWASP Top 10 (2021). This tool helps security professionals and developers identify potential vulnerabilities in web applications through automated scanning.
+## 🛡️ Features
 
-<p align="center">
-  <img width="700" src="/api/placeholder/800/400" alt="OWASP Scanner Banner">
-</p>
+- Subdomain discovery
+- Common vulnerability scanning
+- SSL/TLS configuration checks
+- Header security analysis
+- Input validation testing
+- Output reporting in multiple formats
 
-## ✨ Features
+## 📋 Prerequisites
 
-- **OWASP Top 10 Coverage**: Scans for vulnerabilities based on OWASP Top 10 (2021)
-- **Subdomain Discovery**: Identifies and scans subdomains of the target
-- **Multi-threaded Scanning**: Parallel scanning for improved performance
-- **Detailed Reporting**: Comprehensive JSON reports and console summaries
-- **Low False Positive Rate**: Designed to minimize false positives through validation checks
-
-## 🔎 Security Checks
-
-The scanner performs comprehensive checks for:
-
-- **Authentication Failures**: Login security, brute force protection, account enumeration
-- **Cryptographic Failures**: SSL/TLS issues, insecure cookies, missing security headers
-- **Injection Vulnerabilities**: SQL, XSS, and command injection points
-- **Insecure Design**: User enumeration, rate limiting, default credentials
-- **Security Misconfigurations**: Information leakage, dangerous HTTP methods
-- **Vulnerable Components**: Outdated libraries, exposed server information
-- **Data Integrity Issues**: Missing CSP, SRI checks, cache poisoning vectors
-- **Logging & Monitoring**: Exposed logs, monitoring endpoints, log injection
-- **SSRF Vulnerabilities**: URL parameters, form fields, and header-based vectors
+- Python 3.7 or higher
+- pip3 (Python package manager)
+- Optional: Go 1.16+ (for enhanced subdomain discovery)
 
 ## 🚀 Installation
 
-```bash
-# Clone the repository
-git clone https://github.com/yourusername/owasp-security-scanner.git
-cd owasp-security-scanner
+### Automatic Installation
 
-# Install dependencies
-pip install -r requirements.txt
-
-# For subdomain discovery (optional)
-go install github.com/tomnomnom/assetfinder@latest
-```
-
-### Requirements
-
-- Python 3.7+
-- Required Python packages:
-  - requests
-  - beautifulsoup4
-  - dnspython
-  - colorama
-- Optional: Go and assetfinder (for subdomain discovery)
-
-## 💻 Usage
+Use our installation script to set up everything automatically:
 
 ```bash
-python scanner.py https://example.com [-o output.json] [-s] [-t THREADS] [-m MAX_SUBDOMAINS]
+# Download the install script
+curl -O https://raw.githubusercontent.com/your-username/owasp-scanner/main/install.sh
+
+# Make it executable
+chmod +x install.sh
+
+# Run the installer
+./install.sh
 ```
+
+### Manual Installation
+
+If you prefer manual installation:
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/your-username/owasp-scanner.git
+   cd owasp-scanner
+   ```
+
+2. Create and activate a virtual environment:
+   ```bash
+   virtualenv venv
+   source venv/bin/activate
+   ```
+
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. Make the scanner executable:
+   ```bash
+   chmod +x scanner.py
+   ```
+
+5. (Optional) Install assetfinder for subdomain discovery:
+   ```bash
+   go install github.com/tomnomnom/assetfinder@latest
+   ```
 
 ### Command Line Arguments
 
@@ -76,43 +79,110 @@ python scanner.py https://example.com [-o output.json] [-s] [-t THREADS] [-m MAX
 | `-m, --max-subdomains` | Maximum number of subdomains to scan (default: 50) |
 | `-t, --threads` | Number of concurrent threads (default: 5) |
 
-### Example
+## 💻 Usage
+
+### Basic Usage
 
 ```bash
-# Basic scan
-python scanner.py https://example.com
+# Activate the virtual environment
+source venv/bin/activate
 
-# Comprehensive scan with subdomain discovery and output file
-python scanner.py https://example.com -s -o results.json -t 10 -m 100
+# Run a basic scan
+./scanner.py https://example.com
 ```
+
+### Advanced Options
+
+```bash
+# Full scan with all modules
+./scanner.py --full https://example.com
+
+# Scan with specific modules
+./scanner.py --headers --ssl --xss https://example.com
+
+# Save results to a file
+./scanner.py https://example.com --output report.txt
+
+# Export results as JSON
+./scanner.py https://example.com --format json --output report.json
+
+# Specify custom user agent
+./scanner.py https://example.com --user-agent "Custom Scanner"
+
+# Set request timeout
+./scanner.py https://example.com --timeout 30
+```
+
+Run `./scanner.py --help` to see all available options.
 
 ## 📊 Sample Output
 
 ```
-===== SCAN SUMMARY =====
+====================================================================
+       OWASP SECURITY SCANNER RESULTS
+====================================================================
 
 Target: https://example.com
--------------------
-Risk summary:
-- Critical: 1
-- High: 3
-- Medium: 7
-- Low: 12
-- Unknown: 2
+Scan Date: 2025-02-21 15:30:45
+Scan Duration: 00:05:23
 
-Top issues:
-- Cryptographic Failures: 4 finding(s), Risk: High
-- Authentication Failures: 3 finding(s), Risk: High
-- Security Misconfiguration: 5 finding(s), Risk: Medium
-- Insecure Design: 3 finding(s), Risk: Medium
-- Vulnerable Components: 2 finding(s), Risk: Medium
+[+] SSL/TLS Analysis
+  [-] Certificate Valid: ✓
+  [-] TLS Version: TLSv1.3
+  [-] Cipher Suite: TLS_AES_256_GCM_SHA384
+  [-] Forward Secrecy: ✓
 
-Use the JSON output for full details.
+[+] HTTP Headers
+  [-] X-XSS-Protection: Missing ⚠️
+  [-] Content-Security-Policy: Present ✓
+  [-] X-Frame-Options: DENY ✓
+  [-] X-Content-Type-Options: nosniff ✓
+
+[+] Discovered Subdomains: 3
+  [-] api.example.com
+  [-] blog.example.com
+  [-] dev.example.com (Potentially sensitive ⚠️)
+
+[+] Vulnerability Summary
+  [-] Open Ports: 2 (80, 443)
+  [-] XSS Vulnerabilities: 0
+  [-] SQL Injection Points: 0
+  [-] CSRF Issues: 1 (Medium)
+  [-] Information Disclosure: 2 (Low)
 ```
 
-## ⚠️ Legal Disclaimer
+## 🛠️ Troubleshooting
 
-This tool is provided for educational and ethical security testing purposes only. Always obtain proper authorization before scanning any systems you don't own. Unauthorized scanning may violate laws or terms of service.
+### Common Issues
+
+1. **Permission Denied**: Run the installation script with sudo or ensure you have appropriate permissions.
+2. **Python Version Error**: Make sure you have Python 3.7 or higher installed.
+3. **Module Not Found**: Ensure your virtual environment is activated and all dependencies are installed.
+
+### Debug Mode
+
+Run the scanner with increased verbosity for debugging:
+
+```bash
+./scanner.py https://example.com --verbose
+```
+
+## 🔄 Updating
+
+To update to the latest version:
+
+```bash
+git pull origin main
+./install.sh --update
+```
+
+## ⚠️ Disclaimer
+
+This tool is designed for security professionals to assess their own systems or systems they have permission to test. Always obtain proper authorization before scanning any systems. Unauthorized scanning may be illegal.
+
+## 📜 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## 🤝 Contributing
 
@@ -124,12 +194,9 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
-## 📝 License
+## 📞 Contact
 
-This project is licensed under the MIT License - see the LICENSE file for details.
+For questions, issues, or collaboration, please open an issue on GitHub.
 
-## 🙏 Acknowledgements
-
-- OWASP for their security guidelines and resources
-- The security community for techniques and best practices
-- Contributors who have helped improve this tool
+---
+💡 Made with ❤️ for Cybersecurity Professionals
