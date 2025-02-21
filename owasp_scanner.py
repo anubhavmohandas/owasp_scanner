@@ -131,67 +131,62 @@ class OWASPScanner:
             return None
         except Exception:
             return None
+    def scan_single_target(self, target):
+        """Scan a single target for all vulnerabilities"""
+        self.logger.info(f"Scanning {target}")
+        target_results = {}
+        
+        # OWASP Top 10 2021 checks
+        target_results["A01:2021-Broken_Access_Control"] = self.check_with_retry(
+            target, self.check_broken_access_control)
+        target_results["A02:2021-Cryptographic_Failures"] = self.check_with_retry(
+            target, self.check_cryptographic_failures)
+        target_results["A03:2021-Injection"] = self.check_with_retry(
+            target, self.check_injection)
+        target_results["A04:2021-Insecure_Design"] = self.check_with_retry(
+            target, self.check_insecure_design)
+        target_results["A05:2021-Security_Misconfiguration"] = self.check_with_retry(
+            target, self.check_security_misconfiguration)
+        target_results["A06:2021-Vulnerable_Components"] = self.check_with_retry(
+            target, self.check_vulnerable_components)
+        target_results["A07:2021-Auth_Failures"] = self.check_with_retry(
+            target, self.check_auth_failures)
+        target_results["A08:2021-Software_Data_Integrity_Failures"] = self.check_with_retry(
+            target, self.check_software_data_integrity_failures)
+        target_results["A09:2021-Logging_Monitoring_Failures"] = self.check_with_retry(
+            target, self.check_logging_monitoring_failures)
+        target_results["A10:2021-SSRF"] = self.check_with_retry(
+            target, self.check_ssrf)
+            
+        return target_results
 
     def scan_targets(self):
-        """Scan all targets with retry mechanism for consistency"""
+        """Scan all targets with parallel execution and retry mechanism for consistency"""
         targets = [self.target_url]
         
-        # Discover and verify subdomains if configured
+        # Discover and verify subdomains if enabled
         if self.scan_subdomains:
             discovered = self.discover_subdomains()
             if discovered:
-                print("[*] Verifying subdomain connectivity...")
+                self.logger.info("Verifying subdomain connectivity...")
                 with concurrent.futures.ThreadPoolExecutor(max_workers=self.threads) as executor:
                     verified = list(filter(None, executor.map(self.verify_subdomain_connectivity, discovered)))
-                
-                print(f"[+] Verified {len(verified)} reachable subdomains")
+                self.logger.info(f"Verified {len(verified)} reachable subdomains")
                 targets.extend(verified)
+                
+        self.logger.info(f"Starting scan against {len(targets)} targets")
         
-        print(f"[+] Starting scan against {len(targets)} targets")
-        
-        # Use concurrent execution for each target
+        # Scan all targets in parallel
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.threads) as executor:
             target_results = list(executor.map(self.scan_single_target, targets))
-        
+            
         # Aggregate results
         for target, result in zip(targets, target_results):
             self.results[target] = result
-        
-        # Alternative implementation with specific checks and retry mechanism
-        # Uncomment to use this approach instead
-        """
-        for target in targets:
-            print(f"[*] Scanning {target}")
-            self.results[target] = {}
             
-            # Use retry wrapper for each check
-            self.results[target]["A01:2021-Broken_Access_Control"] = self.check_with_retry(
-                target, self.check_broken_access_control)
-            self.results[target]["A02:2021-Cryptographic_Failures"] = self.check_with_retry(
-                target, self.check_cryptographic_failures)
-            self.results[target]["A03:2021-Injection"] = self.check_with_retry(
-                target, self.check_injection)
-            # Continue for all other checks...
-        """
-        
         self.output_results()
         return self.results
 
-    def scan_single_target(self, url):
-        print(f"[*] Scanning {url}")
-        target_results = {
-            "A01:2021-Broken_Access_Control": self.check_broken_access_control(url),
-            "A02:2021-Cryptographic_Failures": self.check_cryptographic_failures(url),
-            "A03:2021-Injection": self.check_injection_vulnerabilities(url),
-            "A04:2021-Insecure_Design": self.check_insecure_design(url),
-            "A05:2021-Security_Misconfiguration": self.check_security_misconfiguration(url),
-            "A06:2021-Vulnerable_Components": self.check_vulnerable_components(url),
-            "A07:2021-Auth_Failures": self.check_authentication_failures(url),
-            "A08:2021-Software_Data_Integrity_Failures": self.check_data_integrity(url),
-            "A09:2021-Logging_Monitoring_Failures": self.check_logging_monitoring(url),
-            "A10:2021-SSRF": self.check_ssrf_vulnerability(url),
-        }
-        return target_results
 
     def check_broken_access_control(self, url):
         results = {"findings": [], "risk_level": "Unknown"}
