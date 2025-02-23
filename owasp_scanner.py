@@ -4,10 +4,10 @@ import requests
 import json
 import re
 import time
-import subprocess
 import concurrent.futures
 import socket
 import dns.resolver
+import datetime
 from bs4 import BeautifulSoup
 from urllib.parse import urlparse, urljoin
 from requests.packages.urllib3.exceptions import InsecureRequestWarning
@@ -46,81 +46,44 @@ class OWASPScanner:
 
     def discover_subdomains(self):
         """Built-in subdomain discovery using assetfinder"""
-        print(f"[+] Discovering subdomains for {self.base_domain}...")
+        print(f"[+] Discovering subdomains for {self.base_domain} using assetfinder...")
         discovered = set()
-        
-        print("[*] Running assetfinder...")
+    
         try:
-            # Run assetfinder command and capture output
-            cmd = f"assetfinder --subs-only {self.base_domain}"
-            process = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+            # Run assetfinder command
+            cmd = ["assetfinder", "--subs-only", self.base_domain]
+            print(f"[*] Executing: {' '.join(cmd)}")
+            
+            # Use subprocess to run assetfinder and capture output
+            process = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
             stdout, stderr = process.communicate()
             
-            if process.returncode == 0:
-                # Process successful results
-                subdomains = stdout.strip().split('\n')
+            if process.returncode != 0:
+                print(f"[-] Error running assetfinder: {stderr}")
+                return []
+            
+            # Process the output
+            if stdout:
+                subdomains = [line.strip() for line in stdout.splitlines() if line.strip()]
                 for subdomain in subdomains:
-                    if subdomain and subdomain.endswith(self.base_domain):
+                    if subdomain.endswith(self.base_domain):
                         discovered.add(subdomain)
                         print(f"[+] Found subdomain: {subdomain}")
                         if len(discovered) >= self.max_subdomains:
-                            print(f"[*] Reached maximum subdomain limit ({self.max_subdomains})")
                             break
+            
+            print(f"[+] Found {len(discovered)} subdomains via assetfinder")
                 
-                print(f"[+] Assetfinder found {len(discovered)} subdomains")
-            else:
-                print(f"[-] Assetfinder error: {stderr}")
-                # Fallback to other methods if assetfinder fails
-                print("[*] Falling back to certificate transparency logs...")
-                self._check_cert_transparency(discovered)
         except FileNotFoundError:
-            print("[-] Assetfinder not found in PATH. Please install it or check the path.")
-            print("[*] Falling back to certificate transparency logs...")
-            self._check_cert_transparency(discovered)
+            print("[-] Error: assetfinder not found. Please install it with: 'go install github.com/tomnomnom/assetfinder@latest'")
         except Exception as e:
-            print(f"[-] Error running assetfinder: {e}")
-            print("[*] Falling back to certificate transparency logs...")
-            self._check_cert_transparency(discovered)
+            print(f"[-] Error while running assetfinder: {e}")
         
         # Convert discovered subdomains to URLs
         self.subdomains = ['https://' + sub for sub in discovered]
         print(f"[+] Total discovered subdomains: {len(self.subdomains)}")
-        return self.subdomains
-
-    def _check_cert_transparency(self, discovered):
-        """Helper method to check certificate transparency logs"""
-        try:
-            ct_url = f"https://crt.sh/?q=%.{self.base_domain}&output=json"
-            response = requests.get(ct_url, timeout=10)
-            if response.status_code == 200:
-                try:
-                    data = response.json()
-                    for entry in data:
-                        if 'name_value' in entry:
-                            domains = entry['name_value'].split('\n')
-                            for domain in domains:
-                                # Filter out wildcard entries
-                                if '*' not in domain and domain.endswith(self.base_domain):
-                                    discovered.add(domain)
-                                    if len(discovered) >= self.max_subdomains:
-                                        return
-                    print(f"[+] Found {len(discovered)} subdomains via cert transparency")
-                except json.JSONDecodeError:
-                    print("[-] Failed to parse crt.sh JSON response")
-            else:
-                print(f"[-] Failed to query crt.sh: HTTP {response.status_code}")
-        except Exception as e:
-            print(f"[-] Error querying certificate transparency logs: {e}")
         
-    def check_with_retry(self, url, check_function, max_retries=3):
-        """Wrapper function to add reliability to checks with built-in retry mechanism"""
-        for attempt in range(max_retries):
-            try:
-                return check_function(url)
-            except (requests.exceptions.RequestException, socket.timeout) as e:
-                if attempt == max_retries - 1:
-                    return {"findings": [f"Connection error: {str(e)}"], "risk_level": "Unknown"}
-                time.sleep(1) 
+        return self.subdomains
 
     def verify_subdomain_connectivity(self, subdomain_url):
         """Verify that subdomain is reachable"""
@@ -131,70 +94,499 @@ class OWASPScanner:
             return None
         except Exception:
             return None
+
     def scan_single_target(self, target):
-        """Scan a single target for all vulnerabilities"""
-        self.logger.info(f"Scanning {target}")
-        target_results = {}
-        
-        # OWASP Top 10 2021 checks
-        target_results["A01:2021-Broken_Access_Control"] = self.check_with_retry(
-            target, self.check_broken_access_control)
-        target_results["A02:2021-Cryptographic_Failures"] = self.check_with_retry(
-            target, self.check_cryptographic_failures)
-        target_results["A03:2021-Injection"] = self.check_with_retry(
-            target, self.check_injection)
-        target_results["A04:2021-Insecure_Design"] = self.check_with_retry(
-            target, self.check_insecure_design)
-        target_results["A05:2021-Security_Misconfiguration"] = self.check_with_retry(
-            target, self.check_security_misconfiguration)
-        target_results["A06:2021-Vulnerable_Components"] = self.check_with_retry(
-            target, self.check_vulnerable_components)
-        target_results["A07:2021-Auth_Failures"] = self.check_with_retry(
-            target, self.check_auth_failures)
-        target_results["A08:2021-Software_Data_Integrity_Failures"] = self.check_with_retry(
-            target, self.check_software_data_integrity_failures)
-        target_results["A09:2021-Logging_Monitoring_Failures"] = self.check_with_retry(
-            target, self.check_logging_monitoring_failures)
-        target_results["A10:2021-SSRF"] = self.check_with_retry(
-            target, self.check_ssrf)
-            
-        return target_results
+        """Scan a single target for vulnerabilities (implement actual scan here)"""
+        print(f"[*] Scanning {target} for vulnerabilities...")
+        # Placeholder for actual scanning logic (e.g., OWASP ZAP or custom checks)
+        # Return some dummy result for now
+        return {"target": target, "status": "success", "vulnerabilities": []}
 
     def scan_targets(self):
-        """Scan all targets with parallel execution and retry mechanism for consistency"""
         targets = [self.target_url]
-        
-        # Discover and verify subdomains if enabled
         if self.scan_subdomains:
             discovered = self.discover_subdomains()
             if discovered:
-                self.logger.info("Verifying subdomain connectivity...")
+                # Verify connectivity to discovered subdomains
+                print("[*] Verifying subdomain connectivity...")
                 with concurrent.futures.ThreadPoolExecutor(max_workers=self.threads) as executor:
                     verified = list(filter(None, executor.map(self.verify_subdomain_connectivity, discovered)))
-                self.logger.info(f"Verified {len(verified)} reachable subdomains")
-                targets.extend(verified)
                 
-        self.logger.info(f"Starting scan against {len(targets)} targets")
+                print(f"[+] Verified {len(verified)} reachable subdomains")
+                targets.extend(verified)
         
-        # Scan all targets in parallel
+        print(f"[+] Starting scan against {len(targets)} targets")
+        
         with concurrent.futures.ThreadPoolExecutor(max_workers=self.threads) as executor:
             target_results = list(executor.map(self.scan_single_target, targets))
-            
+        
         # Aggregate results
         for target, result in zip(targets, target_results):
             self.results[target] = result
-            
+        
         self.output_results()
         return self.results
+    
+    def output_results(self):
+        """Output scan results (could be printed or saved to file)"""
+        if self.output_file:
+            with open(self.output_file, 'w') as f:
+                for target, result in self.results.items():
+                    f.write(f"Target: {target}\n")
+                    f.write(f"Status: {result['status']}\n")
+                    f.write(f"Vulnerabilities: {result['vulnerabilities']}\n\n")
+        else:
+            for target, result in self.results.items():
+                print(f"Target: {target}")
+                print(f"Status: {result['status']}")
+                print(f"Vulnerabilities: {result['vulnerabilities']}")
 
+    def scan_single_target(self, url):
+        print(f"[*] Scanning {url}")
+        target_results = {
+            "A01:2021-Broken_Access_Control": self.check_broken_access_control(url),
+            "A02:2021-Cryptographic_Failures": self.check_cryptographic_failures(url),
+            "A03:2021-Injection": self.check_injection_vulnerabilities(url),
+            "A04:2021-Insecure_Design": self.check_insecure_design(url),
+            "A05:2021-Security_Misconfiguration": self.check_security_misconfiguration(url),
+            "A06:2021-Vulnerable_Components": self.check_vulnerable_components(url),
+            "A07:2021-Auth_Failures": self.check_authentication_failures(url),
+            "A08:2021-Software_Data_Integrity_Failures": self.check_data_integrity(url),
+            "A09:2021-Logging_Monitoring_Failures": self.check_logging_monitoring(url),
+            "A10:2021-SSRF": self.check_ssrf_vulnerability(url),
+        }
+        return target_results
 
     def check_broken_access_control(self, url):
-        results = {"findings": [], "risk_level": "Unknown"}
+        results = {"findings": [], "risk_level": "Unknown", "details": {}}
         
-        # Check for directory listing
+        try:
+            # Track vulnerabilities by category for detailed reporting
+            vuln_categories = {
+                "directory_listing": [],
+                "sensitive_files": [],
+                "robots_txt_exposure": [],
+                "cors_misconfig": [],
+                "missing_access_control": [],
+                "idor_vuln": [],
+                "jwt_issues": [],
+                "http_method_issues": [],
+                "authentication_bypass": []
+            }
+            
+            # 1. DIRECTORY LISTING CHECKS
+            # Enhanced directory list including cloud-specific and framework directories
+            common_dirs = [
+                '/admin/', '/backup/', '/config/', '/dashboard/', '/uploads/', '/includes/', 
+                '/private/', '/users/', '/tmp/', '/old/', '/assets/', '/logs/', '/api/', 
+                '/internal/', '/dev/', '/.aws/', '/.github/', '/app/', '/dist/', '/src/',
+                '/content/', '/media/', '/static/', '/cgi-bin/', '/vendor/', '/node_modules/',
+                '/composer/', '/wp-admin/', '/wp-content/', '/wp-includes/', '/administrator/',
+                '/panel/', '/portal/', '/manager/', '/management/', '/backend/', '/filemanager/',
+                '/examples/', '/install/', '/setup/', '/test/', '/testing/'
+            ]
+            
+            for directory in common_dirs:
+                test_url = urljoin(url, directory)
+                response = self.session.get(test_url, timeout=5, verify=False, allow_redirects=False)
+                
+                if response.status_code in [200, 301, 302]:
+                    # Check if it's a directory listing
+                    dir_indicators = [
+                        'Index of', 'Directory listing', '<title>Index of /', 
+                        'Parent Directory', '[To Parent Directory]', 
+                        '<!-- indexing -->', 'Directory: /', '<h1>Index of'
+                    ]
+                    
+                    if any(indicator in response.text for indicator in dir_indicators):
+                        finding = {
+                            "url": test_url,
+                            "status_code": response.status_code,
+                            "evidence": "Directory listing detected",
+                            "remediation": "Disable directory listing in web server configuration"
+                        }
+                        vuln_categories["directory_listing"].append(finding)
+            
+            # 2. SENSITIVE FILE CHECKS
+            sensitive_files = {
+                "config_files": [
+                    '/wp-config.php', '/config.php', '/configuration.php', '/database.yml',
+                    '/settings.py', '/.env', '/app.config', '/appsettings.json', 
+                    '/config.json', '/connection.config', '/default.conf', 
+                    '/config/database.yml', '/application.properties', '/application.yml'
+                ],
+                "log_files": [
+                    '/storage/logs/laravel.log', '/error.log', '/debug.log', '/access.log',
+                    '/logs/app.log', '/var/log/apache2.log', '/var/log/nginx.log',
+                    '/app.log', '/audit.log', '/system.log'
+                ],
+                "backup_files": [
+                    '/backup.sql', '/dump.sql', '/website.bak', '/db.bak', '/www.zip',
+                    '/site.tar.gz', '/backup.tar.gz', '/public_html.zip', '/old.zip',
+                    '/.git/config', '/.svn/entries', '/.hg/store'
+                ],
+                "server_info": [
+                    '/server-status', '/server-info', '/status', '/phpinfo.php', '/info.php',
+                    '/apc.php', '/opcache.php', '/system_status', '/monitor.php'
+                ],
+                "admin_interfaces": [
+                    '/adminer.php', '/phpmyadmin/', '/sqladmin/', '/webadmin/',
+                    '/cpanel', '/plesk', '/whmcs', '/webmail/', '/roundcube/'
+                ],
+                "api_docs": [
+                    '/swagger-ui.html', '/api-docs', '/swagger/', '/graphql',
+                    '/api/documentation', '/openapi.json', '/actuator/mappings'
+                ],
+                "monitoring": [
+                    '/prometheus', '/metrics', '/actuator/health', '/actuator/env',
+                    '/actuator/httptrace', '/actuator/heapdump', '/actuator/loggers',
+                    '/nagios/', '/zabbix/', '/munin/'
+                ]
+            }
+            
+            for category, files in sensitive_files.items():
+                for file_path in files:
+                    test_url = urljoin(url, file_path)
+                    response = self.session.get(test_url, timeout=5, verify=False, allow_redirects=False)
+                    
+                    if response.status_code == 200 and len(response.text) > 0:
+                        sensitive_keywords = [
+                            'password', 'user', 'config', 'database', 'key', 'token', 
+                            'secret', 'admin', 'credentials', 'pass', 'pwd', 'auth',
+                            'api_key', 'apikey', 'access_key', 'db_', 'connection', 'private',
+                            'certificate', 'bearer', 'passwd', 'root', 'administrator'
+                        ]
+                        
+                        # More sophisticated content checking based on file type
+                        is_sensitive = False
+                        evidence = ""
+                        
+                        if category == "config_files" and any(keyword in response.text.lower() for keyword in sensitive_keywords):
+                            is_sensitive = True
+                            evidence = "Configuration file with sensitive data"
+                        elif category == "log_files" and (len(response.text) > 1000 or any(kw in response.text.lower() for kw in ['error', 'exception', 'stack trace', 'warning'])):
+                            is_sensitive = True
+                            evidence = "Log file with potential sensitive information"
+                        elif category == "backup_files" and (len(response.text) > 5000 or any(kw in response.text.lower() for kw in ['insert into', 'create table', 'dump', 'backup'])):
+                            is_sensitive = True
+                            evidence = "Backup file with database or site data"
+                        elif category == "server_info" and any(kw in response.text.lower() for kw in ['php version', 'server at', 'system', 'build date', 'server version']):
+                            is_sensitive = True
+                            evidence = "Server information disclosure"
+                        elif category == "admin_interfaces" and any(kw in response.text.lower() for kw in ['login', 'admin', 'dashboard', 'panel']):
+                            is_sensitive = True
+                            evidence = "Admin interface accessible"
+                        elif category == "api_docs" and any(kw in response.text.lower() for kw in ['api', 'swagger', 'endpoint', 'request', 'response']):
+                            is_sensitive = True
+                            evidence = "API documentation exposed"
+                        elif category == "monitoring" and any(kw in response.text.lower() for kw in ['metrics', 'health', 'status', 'memory', 'uptime']):
+                            is_sensitive = True
+                            evidence = "Monitoring endpoint exposed"
+                        
+                        if is_sensitive:
+                            finding = {
+                                "url": test_url,
+                                "category": category,
+                                "status_code": response.status_code,
+                                "evidence": evidence,
+                                "remediation": f"Restrict access to {category} or move to non-public location"
+                            }
+                            vuln_categories["sensitive_files"].append(finding)
+            
+            # 3. ROBOTS.TXT ANALYSIS 
+            robots_url = urljoin(url, '/robots.txt')
+            response = self.session.get(robots_url, timeout=5, verify=False)
+            if response.status_code == 200:
+                sensitive_paths = [
+                    'admin', 'backup', 'config', 'dashboard', 'internal', 'private', 'user',
+                    'login', 'management', 'secret', 'secure', 'security', 'staff',
+                    'portal', 'console', 'exchange', 'auth', 'account', 'administrator',
+                    'sensitive', 'restricted', 'settings', 'system', 'control'
+                ]
+                
+                found_paths = []
+                for path in sensitive_paths:
+                    if path in response.text.lower():
+                        found_paths.append(path)
+                        
+                        # Also try accessing the path to verify it exists
+                        test_url = urljoin(url, f'/{path}/')
+                        try:
+                            path_response = self.session.get(test_url, timeout=3, verify=False, allow_redirects=False)
+                            if path_response.status_code in [200, 301, 302, 401, 403]:
+                                finding = {
+                                    "path": path,
+                                    "url": test_url,
+                                    "status_code": path_response.status_code,
+                                    "exists": True,
+                                    "evidence": f"Path mentioned in robots.txt and appears to exist",
+                                    "remediation": "Consider removing sensitive paths from robots.txt"
+                                }
+                            else:
+                                finding = {
+                                    "path": path,
+                                    "url": test_url,
+                                    "status_code": path_response.status_code,
+                                    "exists": False,
+                                    "evidence": f"Path mentioned in robots.txt but may not exist",
+                                    "remediation": "Remove unnecessary entries from robots.txt"
+                                }
+                            vuln_categories["robots_txt_exposure"].append(finding)
+                        except Exception:
+                            # If connection fails, still record the finding
+                            finding = {
+                                "path": path,
+                                "evidence": f"Path mentioned in robots.txt but couldn't verify existence",
+                                "remediation": "Review and clean up robots.txt file"
+                            }
+                            vuln_categories["robots_txt_exposure"].append(finding)
+            
+            # 4. COMPREHENSIVE CORS TESTS
+            origins_to_test = [
+                'https://malicious-site.com',
+                'https://attacker.com',
+                'null',
+                url.replace('https://', 'https://evil-').replace('http://', 'http://evil-'),
+                url + '.attacker.com',
+                url.replace('://', '://subdomain.'),
+                '*'
+            ]
+            
+            for test_origin in origins_to_test:
+                headers = {'Origin': test_origin}
+                response = self.session.get(url, headers=headers, timeout=5, verify=False)
+                
+                cors_issues = []
+                
+                if 'Access-Control-Allow-Origin' in response.headers:
+                    acao = response.headers['Access-Control-Allow-Origin']
+                    
+                    # Check for various CORS issues
+                    if acao == '*':
+                        cors_issues.append("Wildcard (*) origin allowed")
+                    elif acao == 'null':
+                        cors_issues.append("'null' origin allowed - sandboxed iframes can access")
+                    elif test_origin == acao:
+                        cors_issues.append(f"Server reflects arbitrary origin: {test_origin}")
+                    elif acao.endswith(test_origin.split('://')[-1]):
+                        cors_issues.append(f"Possible origin reflection vulnerability with suffix matching")
+                    
+                    # Check for credentials with permissive CORS
+                    if 'Access-Control-Allow-Credentials' in response.headers:
+                        if response.headers['Access-Control-Allow-Credentials'].lower() == 'true':
+                            if acao == '*' or test_origin == acao or acao == 'null':
+                                cors_issues.append(f"Critical: Credentials allowed with permissive origin: {acao}")
+                    
+                    if cors_issues:
+                        finding = {
+                            "origin_tested": test_origin,
+                            "acao_value": acao,
+                            "credentials_allowed": 'Access-Control-Allow-Credentials' in response.headers and response.headers['Access-Control-Allow-Credentials'].lower() == 'true',
+                            "issues": cors_issues,
+                            "remediation": "Implement strict CORS policy with specific trusted origins and avoid credentials with permissive origins"
+                        }
+                        vuln_categories["cors_misconfig"].append(finding)
+            
+            # 5. FUNCTION LEVEL ACCESS CONTROL TESTS
+            # Test authenticated-only endpoints with varying permissions
+            admin_endpoints = [
+                '/admin/users', '/api/admin', '/dashboard/settings', '/manage/config',
+                '/admin/settings', '/admin/system', '/administrator/index.php',
+                '/wp-admin/options.php', '/api/v1/admin', '/control/site',
+                '/management/users', '/console/settings', '/settings/global',
+                '/api/internal', '/api/private', '/api/restricted'
+            ]
+            
+            user_endpoints = [
+                '/api/user/profile', '/account/settings', '/profile/edit',
+                '/api/v1/users/me', '/dashboard', '/my-account', '/preferences',
+                '/api/documents', '/api/v1/orders', '/api/v1/transactions'
+            ]
+            
+            # Expanded checking for function level access control
+            for endpoint in admin_endpoints:
+                test_url = urljoin(url, endpoint)
+                
+                # Try without authentication
+                try:
+                    no_auth_response = self.session.get(test_url, timeout=5, verify=False, allow_redirects=False)
+                    
+                    # If status code is 200 and doesn't seem to be a login page, potential issue
+                    if no_auth_response.status_code == 200 and not any(kw in no_auth_response.text.lower() for kw in ['login', 'sign in', 'authenticate']):
+                        finding = {
+                            "url": test_url,
+                            "status_code": no_auth_response.status_code,
+                            "auth_required": False,
+                            "evidence": "Admin endpoint accessible without authentication",
+                            "severity": "Critical",
+                            "remediation": "Implement proper authentication checks for all admin endpoints"
+                        }
+                        vuln_categories["missing_access_control"].append(finding)
+                    
+                    # Try with fake authorization header - some implementations only check presence, not validity
+                    headers = {'Authorization': 'Bearer FAKE_TOKEN_FOR_TESTING1234567890'}
+                    fake_auth_response = self.session.get(test_url, headers=headers, timeout=5, verify=False, allow_redirects=False)
+                    
+                    if fake_auth_response.status_code == 200 and fake_auth_response.text != no_auth_response.text:
+                        finding = {
+                            "url": test_url,
+                            "status_code": fake_auth_response.status_code,
+                            "auth_bypass": True,
+                            "evidence": "Endpoint may accept invalid tokens or have improper token validation",
+                            "severity": "Critical",
+                            "remediation": "Implement proper JWT/token validation"
+                        }
+                        vuln_categories["authentication_bypass"].append(finding)
+                except Exception:
+                    pass  # Continue with next endpoint if this one fails
+            
+            # 6. INSECURE DIRECT OBJECT REFERENCE (IDOR) TESTS
+            idor_endpoints = [
+                '/api/users/', '/api/documents/', '/api/orders/', '/api/transactions/',
+                '/api/invoices/', '/api/files/', '/api/records/', '/api/items/',
+                '/user/profile/', '/account/', '/document/', '/order/'
+            ]
+            
+            for endpoint in idor_endpoints:
+                for i in range(1, 5):  # Try a few sequential IDs
+                    test_url = urljoin(url, f'{endpoint}{i}')
+                    try:
+                        response = self.session.get(test_url, timeout=5, verify=False, allow_redirects=False)
+                        
+                        if response.status_code == 200:
+                            # Check if response contains user/personal data
+                            data_indicators = ['email', 'username', 'user_id', 'firstname', 'lastname',
+                                            'address', 'phone', 'ssn', 'birth', 'credit', 'payment',
+                                            'order_id', 'document_id', 'account']
+                            
+                            if any(indicator in response.text.lower() for indicator in data_indicators):
+                                # Try to extract a sample of the potential exposed data (safely)
+                                data_snippet = ""
+                                try:
+                                    # See if it's JSON data
+                                    if response.headers.get('Content-Type', '').startswith('application/json'):
+                                        data = response.json()
+                                        # Get first few keys as evidence
+                                        data_snippet = "Fields exposed: " + ", ".join(list(data.keys())[:5])
+                                except:
+                                    # Not JSON or couldn't parse, take a safe text sample
+                                    data_snippet = "Data may contain personal information"
+                                
+                                finding = {
+                                    "url": test_url,
+                                    "endpoint_type": endpoint,
+                                    "status_code": response.status_code,
+                                    "evidence": data_snippet,
+                                    "remediation": "Implement proper authorization checks for all object references"
+                                }
+                                vuln_categories["idor_vuln"].append(finding)
+                                break  # Found one instance, no need to check more IDs for this endpoint
+                    except Exception:
+                        continue  # Skip to next ID or endpoint
+            
+            # 7. HTTP METHOD TESTING
+            methods_to_test = ['POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'TRACE', 'DEBUG']
+            
+            for method in methods_to_test:
+                try:
+                    response = self.session.request(method, url, timeout=5, verify=False)
+                    
+                    # Check for concerning responses
+                    if method == 'TRACE' and 'TRACE /' in response.text:
+                        finding = {
+                            "method": method,
+                            "status_code": response.status_code,
+                            "evidence": "HTTP TRACE method enabled - potential for Cross-Site Tracing (XST)",
+                            "remediation": "Disable TRACE method on your web server"
+                        }
+                        vuln_categories["http_method_issues"].append(finding)
+                    
+                    elif method in ['PUT', 'DELETE'] and response.status_code in [200, 201, 202, 204]:
+                        finding = {
+                            "method": method,
+                            "status_code": response.status_code,
+                            "evidence": f"HTTP {method} method appears to be allowed without authentication",
+                            "remediation": f"Restrict {method} method or implement proper authentication"
+                        }
+                        vuln_categories["http_method_issues"].append(finding)
+                    
+                    elif method == 'OPTIONS' and response.status_code == 200:
+                        if 'Allow' in response.headers:
+                            allowed_methods = response.headers['Allow']
+                            if any(m in allowed_methods for m in ['PUT', 'DELETE']):
+                                finding = {
+                                    "method": "OPTIONS",
+                                    "status_code": response.status_code,
+                                    "allowed_methods": allowed_methods,
+                                    "evidence": "Potentially dangerous HTTP methods allowed",
+                                    "remediation": "Restrict HTTP methods to only those required"
+                                }
+                                vuln_categories["http_method_issues"].append(finding)
+                except Exception:
+                    continue  # Skip to next method
+            
+            # 8. JWT TOKEN TESTING
+            auth_endpoints = ['/api/login', '/api/token', '/api/auth', '/oauth/token', '/login']
+            
+            for endpoint in auth_endpoints:
+                test_url = urljoin(url, endpoint)
+                try:
+                    # Look for JWT in cookies or response body
+                    response = self.session.get(test_url, timeout=5, verify=False)
+                    
+                    # Check for JWT in cookies
+                    for cookie in response.cookies:
+                        cookie_value = cookie.value
+                        if cookie_value.count('.') == 2 and all(part.strip() for part in cookie_value.split('.')):
+                            # Likely a JWT token, test for none algorithm vulnerability
+                            finding = {
+                                "url": test_url,
+                                "cookie_name": cookie.name,
+                                "evidence": "Potential JWT token found in cookies",
+                                "recommended_tests": "Test for algorithm switching (none/HS256), weak signature verification, missing exp/nbf claims"
+                            }
+                            vuln_categories["jwt_issues"].append(finding)
+                except Exception:
+                    continue  # Skip to next endpoint
+            
+            # Process all findings and determine risk level
+            for category, findings in vuln_categories.items():
+                if findings:
+                    results["details"][category] = findings
+                    results["findings"].extend([f"{category.replace('_', ' ').title()}: {len(findings)} issue(s) found"])
+            
+            # Determine overall risk level based on findings
+            if any(len(findings) > 0 for category, findings in vuln_categories.items() 
+                if category in ["sensitive_files", "missing_access_control", "authentication_bypass"]):
+                results["risk_level"] = "Critical"
+            elif any(len(findings) > 0 for category, findings in vuln_categories.items() 
+                    if category in ["idor_vuln", "directory_listing", "jwt_issues"]):
+                results["risk_level"] = "High"
+            elif any(len(findings) > 0 for category, findings in vuln_categories.items()):
+                results["risk_level"] = "Medium"
+            elif not results["findings"]:
+                results["risk_level"] = "Low"
+                results["findings"].append("No broken access control issues detected.")
+            
+        except Exception as e:
+            results["error"] = str(e)
+            results["findings"].append(f"Error during testing: {str(e)}")
+        
+        finally:
+            # Add test metadata
+            results["test_timestamp"] = datetime.datetime.now().isoformat()
+            results["test_coverage"] = {
+                "directories_tested": len(common_dirs),
+                "files_tested": sum(len(files) for files in sensitive_files.values()),
+                "endpoints_tested": len(admin_endpoints) + len(user_endpoints) + len(idor_endpoints)
+            }
+        
+        return results
+            
+            # Check for directory listing
         try:
             common_dirs = ['/admin/', '/backup/', '/config/', '/dashboard/', '/uploads/', 
-                          '/includes/', '/private/', '/users/', '/tmp/', '/old/']
+                        '/includes/', '/private/', '/users/', '/tmp/', '/old/']
             for directory in common_dirs:
                 test_url = urljoin(url, directory)
                 response = self.session.get(test_url, timeout=5, verify=False, allow_redirects=False)
@@ -225,36 +617,36 @@ class OWASPScanner:
                         results["findings"].append(f"Potentially sensitive file accessible: {test_url}")
                         results["risk_level"] = "Critical"
             
-            # Check for robots.txt
-            robots_url = urljoin(url, '/robots.txt')
-            response = self.session.get(robots_url, timeout=5, verify=False)
-            if response.status_code == 200:
-                sensitive_paths = ['admin', 'backup', 'config', 'dashboard', 'internal', 'private', 'user']
-                for path in sensitive_paths:
-                    if path in response.text:
-                        results["findings"].append(f"Sensitive path '{path}' found in robots.txt")
-                        if results["risk_level"] == "Unknown":
-                            results["risk_level"] = "Medium"
-            
-            # Check for CORS misconfiguration
-            headers = {
-                'Origin': 'https://malicious-site.com'
-            }
-            
-            response = self.session.get(url, headers=headers, timeout=5, verify=False)
-            if 'Access-Control-Allow-Origin' in response.headers:
-                acao = response.headers['Access-Control-Allow-Origin']
-                if acao == '*' or acao == 'https://malicious-site.com':
-                    results["findings"].append(f"CORS misconfiguration: Access-Control-Allow-Origin: {acao}")
-                    results["risk_level"] = "Medium"
-            
+                # Check for robots.txt
+                robots_url = urljoin(url, '/robots.txt')
+                response = self.session.get(robots_url, timeout=5, verify=False)
+                if response.status_code == 200:
+                    sensitive_paths = ['admin', 'backup', 'config', 'dashboard', 'internal', 'private', 'user']
+                    for path in sensitive_paths:
+                        if path in response.text:
+                            results["findings"].append(f"Sensitive path '{path}' found in robots.txt")
+                            if results["risk_level"] == "Unknown":
+                                results["risk_level"] = "Medium"
+                
+                # Check for CORS misconfiguration
+                headers = {
+                    'Origin': 'https://malicious-site.com'
+                }
+                
+                response = self.session.get(url, headers=headers, timeout=5, verify=False)
+                if 'Access-Control-Allow-Origin' in response.headers:
+                    acao = response.headers['Access-Control-Allow-Origin']
+                    if acao == '*' or acao == 'https://malicious-site.com':
+                        results["findings"].append(f"CORS misconfiguration: Access-Control-Allow-Origin: {acao}")
+                        results["risk_level"] = "Medium"
+                
         except Exception as e:
             results["error"] = str(e)
-        
-        if not results["findings"]:
-            results["risk_level"] = "Low"
             
-        return results
+            if not results["findings"]:
+                results["risk_level"] = "Low"
+                
+            return results
 
     def check_cryptographic_failures(self, url):
         results = {"findings": [], "risk_level": "Unknown"}
@@ -306,8 +698,8 @@ class OWASPScanner:
                         # TLS 1.0 check
                         import ssl
                         try:
-                            # Try to establish connection
-                            tls_context = ssl.create_default_context()
+                            # Try to establish connection with TLS 1.0
+                            tls_context = ssl.SSLContext(ssl.PROTOCOL_TLS)
                             tls_context.check_hostname = False
                             tls_context.verify_mode = ssl.CERT_NONE
                             tls_socket = tls_context.wrap_socket(socket.socket(), server_hostname=hostname)
@@ -1209,7 +1601,7 @@ class OWASPScanner:
                     print(f"- {category}: {info['count']} finding(s), Risk: {info['risk_level']}")
             
             print("\nUse the JSON output for full details.")
-
+    
 def print_banner():
     banner = """
                 /$$$$$$  /$$      /$$  /$$$$$$   /$$$$$$  /$$$$$$$  
