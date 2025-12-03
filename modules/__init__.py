@@ -10,14 +10,22 @@ from .cryptographic_failures import CryptographicFailuresScanner
 from .injection import InjectionScanner
 from .security_misconfiguration import SecurityMisconfigurationScanner
 from .supply_chain_failures import SupplyChainFailuresScanner
+from .insecure_design import InsecureDesignScanner
+from .authentication_failures import AuthenticationFailuresScanner
+from .data_integrity_failures import DataIntegrityFailuresScanner
+from .logging_monitoring_failures import LoggingMonitoringFailuresScanner
 from .exceptional_conditions import ExceptionalConditionsScanner
 
 __all__ = [
     'BrokenAccessControlScanner',
-    'CryptographicFailuresScanner',
-    'InjectionScanner',
     'SecurityMisconfigurationScanner',
     'SupplyChainFailuresScanner',
+    'CryptographicFailuresScanner',
+    'InjectionScanner',
+    'InsecureDesignScanner',
+    'AuthenticationFailuresScanner',
+    'DataIntegrityFailuresScanner',
+    'LoggingMonitoringFailuresScanner',
     'ExceptionalConditionsScanner'
 ]
-__version__ = '2.1.0'  # Updated for OWASP Top 10:2025 support
+__version__ = '3.0.0'  # Complete OWASP Top 10:2025 support (all 10 categories)
