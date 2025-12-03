@@ -117,31 +117,26 @@ class CryptographicFailuresScanner:
                 })
                 return vulnerabilities
             
-            # Attempt to connect using older protocol versions
-            context = ssl.create_default_context()
-            
-            # Check SSL v2 and v3 (should be disabled)
-            for protocol in [ssl.PROTOCOL_SSLv23]:
-                try:
-                    conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                    conn.settimeout(5)
-                    conn.connect((hostname.split(':')[0], 443))
-                    
-                    # Try to use an older TLS protocol
-                    ssl_sock = ssl.wrap_socket(conn, ssl_version=protocol)
-                    if ssl_sock:
-                        vulnerabilities.append({
-                            'type': 'Cryptographic Failure',
-                            'risk_level': 'High',
-                            'description': 'Server supports outdated SSL/TLS protocols',
-                            'location': f"https://{hostname}",
-                            'recommendation': 'Disable support for SSL v2/v3 and TLS 1.0/1.1, and use only TLS 1.2 or higher'
-                        })
-                    ssl_sock.close()
-                except:
-                    pass
-                finally:
-                    conn.close()
+            # Check for SSL/TLS protocol support
+            try:
+                context = ssl.create_default_context()
+
+                # Try to connect and get SSL/TLS version
+                with socket.create_connection((hostname.split(':')[0], 443), timeout=5) as sock:
+                    with context.wrap_socket(sock, server_hostname=hostname.split(':')[0]) as ssock:
+                        protocol_version = ssock.version()
+
+                        # Check if using outdated protocols
+                        if protocol_version in ['TLSv1', 'TLSv1.1', 'SSLv2', 'SSLv3']:
+                            vulnerabilities.append({
+                                'type': 'Cryptographic Failure',
+                                'risk_level': 'High',
+                                'description': f'Server supports outdated SSL/TLS protocol: {protocol_version}',
+                                'location': f"https://{hostname}",
+                                'recommendation': 'Disable support for SSL v2/v3 and TLS 1.0/1.1, and use only TLS 1.2 or higher'
+                            })
+            except Exception as e:
+                self.log(f"Could not check TLS version: {e}")
             
         except Exception as e:
             self.log(f"Error checking SSL/TLS: {e}")

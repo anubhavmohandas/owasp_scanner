@@ -4,6 +4,8 @@ import requests
 import json
 import re
 import time
+import ssl
+import subprocess
 import concurrent.futures
 import socket
 import dns.resolver
@@ -94,13 +96,6 @@ class OWASPScanner:
             return None
         except Exception:
             return None
-
-    def scan_single_target(self, target):
-        """Scan a single target for vulnerabilities (implement actual scan here)"""
-        print(f"[*] Scanning {target} for vulnerabilities...")
-        # Placeholder for actual scanning logic (e.g., OWASP ZAP or custom checks)
-        # Return some dummy result for now
-        return {"target": target, "status": "success", "vulnerabilities": []}
 
     def scan_targets(self):
         targets = [self.target_url]
@@ -582,71 +577,6 @@ class OWASPScanner:
             }
         
         return results
-            
-            # Check for directory listing
-        try:
-            common_dirs = ['/admin/', '/backup/', '/config/', '/dashboard/', '/uploads/', 
-                        '/includes/', '/private/', '/users/', '/tmp/', '/old/']
-            for directory in common_dirs:
-                test_url = urljoin(url, directory)
-                response = self.session.get(test_url, timeout=5, verify=False, allow_redirects=False)
-                
-                if response.status_code == 200:
-                    # Check if it's a directory listing
-                    if ('Index of' in response.text or 'Directory listing' in response.text or
-                        '<title>Index of /' in response.text):
-                        results["findings"].append(f"Directory listing enabled at {test_url}")
-                        results["risk_level"] = "High"
-            
-            # Check for direct access to restricted files
-            sensitive_files = [
-                '/wp-config.php', '/config.php', '/configuration.php', '/database.yml',
-                '/settings.py', '/.env', '/.git/config', '/storage/logs/laravel.log',
-                '/web.config', '/httpd.conf', '/.htaccess', '/server-status',
-                '/login.json', '/api/users', '/actuator/env', '/api/v1/users'
-            ]
-            
-            for file_path in sensitive_files:
-                test_url = urljoin(url, file_path)
-                response = self.session.get(test_url, timeout=5, verify=False, allow_redirects=False)
-                
-                # Check if file might be accessible
-                if response.status_code == 200 and len(response.text) > 0:
-                    # Check if it looks like configuration data
-                    if any(x in response.text.lower() for x in ['password', 'user', 'config', 'database', 'key', 'token']):
-                        results["findings"].append(f"Potentially sensitive file accessible: {test_url}")
-                        results["risk_level"] = "Critical"
-            
-                # Check for robots.txt
-                robots_url = urljoin(url, '/robots.txt')
-                response = self.session.get(robots_url, timeout=5, verify=False)
-                if response.status_code == 200:
-                    sensitive_paths = ['admin', 'backup', 'config', 'dashboard', 'internal', 'private', 'user']
-                    for path in sensitive_paths:
-                        if path in response.text:
-                            results["findings"].append(f"Sensitive path '{path}' found in robots.txt")
-                            if results["risk_level"] == "Unknown":
-                                results["risk_level"] = "Medium"
-                
-                # Check for CORS misconfiguration
-                headers = {
-                    'Origin': 'https://malicious-site.com'
-                }
-                
-                response = self.session.get(url, headers=headers, timeout=5, verify=False)
-                if 'Access-Control-Allow-Origin' in response.headers:
-                    acao = response.headers['Access-Control-Allow-Origin']
-                    if acao == '*' or acao == 'https://malicious-site.com':
-                        results["findings"].append(f"CORS misconfiguration: Access-Control-Allow-Origin: {acao}")
-                        results["risk_level"] = "Medium"
-                
-        except Exception as e:
-            results["error"] = str(e)
-            
-            if not results["findings"]:
-                results["risk_level"] = "Low"
-                
-            return results
 
     def check_cryptographic_failures(self, url):
         results = {"findings": [], "risk_level": "Unknown"}

@@ -113,8 +113,13 @@ source venv/bin/activate || error "Failed to activate virtual environment" "fata
 
 # Install Python dependencies
 step "Installing Python dependencies"
-substep "Installing required packages..."
-pip install requests beautifulsoup4 dnspython colorama urllib3 argparse concurrent-log-handler || error "Failed to install Python dependencies"
+if [ -f "requirements.txt" ]; then
+  substep "Installing packages from requirements.txt..."
+  pip install -r requirements.txt || error "Failed to install Python dependencies"
+else
+  substep "Installing required packages..."
+  pip install requests beautifulsoup4 dnspython lxml || error "Failed to install Python dependencies"
+fi
 
 # Install Go (for assetfinder)
 install_go() {
@@ -186,27 +191,14 @@ else
   echo -e "${YELLOW}Note: Subdomain discovery functionality will be limited without assetfinder${NC}"
 fi
 
-# Create the requirements.txt file
-step "Creating requirements.txt file"
-cat > requirements.txt << EOF
-requests>=2.28.1
-beautifulsoup4>=4.11.1
-dnspython>=2.2.1
-colorama>=0.4.5
-urllib3>=1.26.12
-argparse>=1.4.0
-concurrent-log-handler>=0.9.20
-EOF
-substep "Created requirements.txt with all dependencies"
-
-# Make the scanner executable
-step "Making the scanner executable"
-if [ -f "scanner.py" ]; then
-  chmod +x scanner.py
-  substep "Scanner is now executable with './scanner.py'"
-else
-  error "scanner.py not found - please make sure the scanner file is in the current directory"
-fi
+# Make the scanner executables
+step "Making the scanner executables"
+for file in main.py owasp_scanner.py; do
+  if [ -f "$file" ]; then
+    chmod +x "$file"
+    substep "$file is now executable"
+  fi
+done
 
 # Setup complete
 echo -e "\n${GREEN}=========================================${NC}"
@@ -215,9 +207,12 @@ echo -e "${GREEN}=========================================${NC}\n"
 
 echo -e "To use the scanner, run:"
 echo -e "  ${BLUE}source venv/bin/activate${NC}"
-echo -e "  ${BLUE}./scanner.py https://example.com${NC}\n"
+echo -e "  ${BLUE}python3 main.py https://example.com${NC}"
+echo -e "  ${BLUE}# OR for full OWASP Top 10 scan:${NC}"
+echo -e "  ${BLUE}python3 owasp_scanner.py https://example.com${NC}\n"
 
 echo -e "To see all options:"
-echo -e "  ${BLUE}./scanner.py --help${NC}\n"
+echo -e "  ${BLUE}python3 main.py --help${NC}"
+echo -e "  ${BLUE}python3 owasp_scanner.py --help${NC}\n"
 
 echo -e "${YELLOW}Note: Always obtain proper authorization before scanning any systems.${NC}"
