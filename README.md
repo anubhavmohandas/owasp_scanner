@@ -144,13 +144,13 @@ python scanner.py https://example.com
 ### Bug Bounty Quick Start
 
 ```bash
-# 1. Parse bug bounty program (e.g., Ubisoft)
-python program_parser.py --file examples/ubisoft_program.txt --output program.json
+# 1. Parse bug bounty program
+python program_parser.py --file examples/generic_program.txt --output program.json
 
 # 2. Run comprehensive bug bounty scan
 python bounty_hunter.py https://target.com \
   --full \
-  --program "Ubisoft Game Security" \
+  --program "Bug Bounty Program" \
   --bounty-report \
   -o bounty_report.txt
 
@@ -162,7 +162,7 @@ cat bounty_report.txt
 # - CVSS scores and bounty estimates
 # - Reproduction steps
 # - Impact descriptions
-# - Ready for submission to Intigriti/HackerOne
+# - Ready for submission to bug bounty platforms
 ```
 
 **Available Modes:**
@@ -171,7 +171,9 @@ cat bounty_report.txt
 - `--enum` - Directory enumeration only
 - `--owasp` - OWASP vulnerability scan only
 
-[📖 Complete Bug Bounty Guide](BUG_BOUNTY_GUIDE.md)
+**Documentation:**
+- [🚀 Quick Start Guide](QUICK_START.md) - Get started in 5 minutes
+- [📖 Complete Bug Bounty Guide](BUG_BOUNTY_GUIDE.md) - Comprehensive usage
 
 ## 💻 Usage Examples
 
