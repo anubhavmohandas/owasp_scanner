@@ -7,80 +7,119 @@
 ![Version](https://img.shields.io/badge/Version-3.0-orange)
 ![License](https://img.shields.io/badge/License-Open%20Source-yellow)
 
-A **comprehensive, automated web application security scanner** supporting **OWASP Top 10:2025** (latest) and OWASP Top 10:2021. This professional-grade tool helps identify critical security vulnerabilities in web applications with detailed reporting and remediation guidance.
+A **comprehensive, production-ready web application security scanner** supporting **OWASP Top 10:2025** (latest) and OWASP Top 10:2021. This professional-grade tool identifies critical security vulnerabilities in web applications with detailed reporting and remediation guidance.
 
-## 🎯 NEW: Bug Bounty Hunter Mode!
+---
 
-**Automated bug bounty hunting platform** that combines OWASP scanning with reconnaissance, directory enumeration, and ready-to-submit vulnerability reports!
+## 🚀 Quick Start (5 Minutes)
 
 ```bash
-# Full bug bounty scan with automated reporting
-python bounty_hunter.py https://target.com --full --bounty-report
+# 1. Clone the repository
+git clone https://github.com/anubhavmohandas/owasp_scanner.git
+cd owasp_scanner
+
+# 2. Install dependencies
+pip3 install -r requirements.txt
+
+# 3. Run your first scan (OWASP 2025)
+python3 scanner2025.py https://example.com
+
+# 4. View the generated HTML report
+# Report saved as: scan_report_example.com_YYYYMMDD_HHMMSS.html
 ```
 
-Features:
-- 🔍 **Automated Reconnaissance** - Tech detection, endpoint discovery
-- 📂 **Directory Enumeration** - Dirbuster-style path discovery
-- 🛡️ **OWASP Top 10:2025** - Complete vulnerability scanning
-- 💰 **Bounty Estimation** - CVSS scoring aligned with program tiers
-- 📊 **Professional Reports** - Ready-to-submit to Intigriti, HackerOne, etc.
+---
 
-[📖 Bug Bounty Hunter Guide](BUG_BOUNTY_GUIDE.md) | [🎯 Quick Start](#bug-bounty-quick-start)
+## 📋 Table of Contents
 
-## 🎉 Now Supporting OWASP Top 10:2025!
+- [Features](#-key-features)
+- [OWASP Coverage](#-owasp-top-10-coverage)
+- [Installation](#-installation)
+- [Usage](#-usage)
+- [What This Scanner Actually Does](#-what-this-scanner-actually-does)
+- [Limitations](#%EF%B8%8F-important-limitations)
+- [Bug Bounty Mode](#-bug-bounty-hunter-mode)
+- [Command Reference](#-command-line-options)
+- [CI/CD Integration](#-cicd-integration)
+- [Contributing](#-contributing)
+- [Legal & Ethics](#-security--legal)
 
-✨ **NEW**: Full support for OWASP Top 10:2025 categories including:
-- **A03:2025** - Software Supply Chain Failures (NEW)
-- **A10:2025** - Mishandling of Exceptional Conditions (NEW)
-- Updated prioritization with Security Misconfiguration at #2
-
-[📖 Read about OWASP 2025 Changes](OWASP_2025.md)
+---
 
 ## ✨ Key Features
 
-### 🎯 Comprehensive Coverage
-- ✅ **Complete OWASP Top 10 2021** vulnerability detection
-- ✅ **Automated subdomain discovery** and scanning
-- ✅ **Parallel scanning** for optimal performance
-- ✅ **Smart vulnerability prioritization** with CVSS-like scoring
+### 🎯 Comprehensive Vulnerability Detection
+
+**OWASP Top 10:2025 (Latest)**
+- ✅ **A01** - Broken Access Control (IDOR, forced browsing, privilege escalation)
+- ✅ **A02** - Security Misconfiguration (headers, exposed files, directory listing)
+- ✅ **A03** - Software Supply Chain Failures (exposed manifests, missing SRI, vulnerable libraries)
+- ✅ **A04** - Cryptographic Failures (HTTPS issues, weak SSL/TLS, insecure cookies)
+- ✅ **A05** - Injection (SQL, NoSQL, Command, XSS detection)
+- ✅ **A06** - Insecure Design (rate limiting, CAPTCHA, business logic flaws)
+- ✅ **A07** - Authentication Failures (weak passwords, missing MFA, session issues)
+- ✅ **A08** - Software/Data Integrity Failures (deserialization, missing integrity checks)
+- ✅ **A09** - Logging & Alerting Failures (verbose errors, missing monitoring)
+- ✅ **A10** - Mishandling of Exceptional Conditions (stack traces, error disclosure)
+
+**OWASP Top 10:2021 (Legacy Support)**
+- Full backward compatibility with 2021 categories
+- Includes SSRF (Server-Side Request Forgery) detection
 
 ### 📊 Professional Reporting
-- 📄 **HTML Reports** - Beautiful, interactive web-based reports
-- 📋 **JSON Reports** - Machine-readable for CI/CD integration
-- 📝 **Text Reports** - Plain text for quick review
-- 🎨 **Color-coded severity** levels (Critical, High, Medium, Low)
+
+- **HTML Reports** - Beautiful, interactive web-based reports with color-coded severity
+- **JSON Reports** - Machine-readable for CI/CD integration and automation
+- **Text Reports** - Plain text for quick review and terminal display
+- **CVSS-like Scoring** - Prioritized vulnerabilities with risk assessment
+- **Remediation Guidance** - Specific fix recommendations for each finding
 
 ### 🚀 Advanced Capabilities
-- ⚡ **Progress tracking** with real-time status updates
-- 🔍 **Deep vulnerability analysis** with detailed findings
-- 💡 **Remediation guidance** for each vulnerability
-- 🔧 **Modular architecture** for easy extension
 
-## 📋 OWASP Top 10 2021 Coverage
+- ⚡ **Real-time Progress Tracking** - See scan progress with status updates
+- 🔍 **Deep Vulnerability Analysis** - Detailed findings with evidence and context
+- 🧵 **Parallel Scanning** - Multi-threaded for optimal performance
+- 🌐 **Subdomain Discovery** - Automatic subdomain enumeration and scanning
+- 🔧 **Modular Architecture** - Easy to extend and customize
+- 💰 **Bug Bounty Mode** - Automated reconnaissance and ready-to-submit reports
 
-| # | Vulnerability Category | Status |
-|---|------------------------|--------|
-| A01 | Broken Access Control | ✅ Full |
-| A02 | Cryptographic Failures | ✅ Full |
-| A03 | Injection | ✅ Full |
-| A04 | Insecure Design | ✅ Full |
-| A05 | Security Misconfiguration | ✅ Full |
-| A06 | Vulnerable and Outdated Components | ✅ Full |
-| A07 | Identification and Authentication Failures | ✅ Full |
-| A08 | Software and Data Integrity Failures | ✅ Full |
-| A09 | Security Logging and Monitoring Failures | ✅ Full |
-| A10 | Server-Side Request Forgery (SSRF) | ✅ Full |
+---
 
-## 🚀 Quick Start
+## 📊 OWASP Top 10:2025 Coverage
+
+| # | Vulnerability Category | Status | Key Detections |
+|---|------------------------|--------|----------------|
+| **A01** | Broken Access Control | ✅ Full | IDOR, forced browsing, exposed admin panels, auth bypass |
+| **A02** | Security Misconfiguration | ✅ Full | Missing headers, directory listing, exposed files (.env, .git) |
+| **A03** | Software Supply Chain Failures | ✅ Full | Exposed manifests, missing SRI, vulnerable libraries, CDN risks |
+| **A04** | Cryptographic Failures | ✅ Full | HTTP usage, weak TLS, mixed content, insecure cookies |
+| **A05** | Injection | ✅ Full | SQL injection (error-based), XSS indicators, command injection |
+| **A06** | Insecure Design | ✅ Full | Missing rate limiting, CAPTCHA, price manipulation, business logic |
+| **A07** | Authentication Failures | ✅ Full | Weak passwords, missing MFA, account lockout, session fixation |
+| **A08** | Software/Data Integrity Failures | ✅ Full | Insecure deserialization, missing SRI, JWT issues, ViewState |
+| **A09** | Logging & Alerting Failures | ✅ Full | Verbose errors, exposed logs, debug mode, missing monitoring |
+| **A10** | Exceptional Conditions | ✅ Full | Stack traces, framework errors, path disclosure, error handling |
+
+### 🆕 What's New in OWASP 2025?
+
+- **A03:2025** - Software Supply Chain Failures (NEW)
+- **A10:2025** - Mishandling of Exceptional Conditions (NEW)
+- **A02:2025** - Security Misconfiguration moved to #2 (increased priority)
+- Updated risk prioritization based on real-world threat landscape
+
+---
+
+## 🔧 Installation
 
 ### Prerequisites
-- Python 3.7 or higher
-- pip3 (Python package manager)
-- Optional: Go 1.16+ (for enhanced subdomain discovery with assetfinder)
 
-### Installation
+- **Python 3.7+** (Python 3.8+ recommended)
+- **pip3** (Python package manager)
+- **Internet connection** (for scanning and updates)
+- **Optional**: Go 1.16+ (for enhanced subdomain discovery)
 
-#### Option 1: Quick Install (Recommended)
+### Method 1: Quick Install (Recommended)
+
 ```bash
 # Clone the repository
 git clone https://github.com/anubhavmohandas/owasp_scanner.git
@@ -89,140 +128,254 @@ cd owasp_scanner
 # Run the automatic installer
 chmod +x install.sh
 ./install.sh
+
+# Activate virtual environment
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
 
-#### Option 2: Manual Installation
+### Method 2: Manual Installation
+
 ```bash
 # Clone the repository
 git clone https://github.com/anubhavmohandas/owasp_scanner.git
 cd owasp_scanner
 
-# Create virtual environment
+# Create virtual environment (recommended)
 python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 
 # Install dependencies
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 
-# Make scanners executable
-chmod +x scanner.py scanner2025.py
+# Verify installation
+python3 scanner2025.py --help
 ```
 
-### Scanner Selection
-
-**Choose the right scanner for your needs:**
-
-#### OWASP Top 10:2025 (Recommended)
-```bash
-python scanner2025.py https://example.com
-```
-- Latest OWASP categories
-- Includes Supply Chain Failures detection
-- Includes Exception Handling analysis
-- Updated priority ordering
-
-#### OWASP Top 10:2021 (Legacy)
-```bash
-python scanner.py https://example.com
-```
-- Original 2021 categories
-- Includes SSRF detection
-- Stable and well-tested
-
-### First Scan
-```bash
-# Activate virtual environment (if not already activated)
-source venv/bin/activate
-
-# Run your first scan with OWASP 2025 (recommended)
-python scanner2025.py https://example.com
-
-# Or use OWASP 2021
-python scanner.py https://example.com
-```
-
-### Bug Bounty Quick Start
+### Method 3: Docker Installation (Coming Soon)
 
 ```bash
-# 1. Parse bug bounty program
-python program_parser.py --file examples/generic_program.txt --output program.json
-
-# 2. Run comprehensive bug bounty scan
-python bounty_hunter.py https://target.com \
-  --full \
-  --program "Bug Bounty Program" \
-  --bounty-report \
-  -o bounty_report.txt
-
-# 3. Review findings
-cat bounty_report.txt
-
-# Report includes:
-# - Severity levels mapped to program tiers
-# - CVSS scores and bounty estimates
-# - Reproduction steps
-# - Impact descriptions
-# - Ready for submission to bug bounty platforms
+docker pull anubhavmohandas/owasp_scanner:latest
+docker run -v $(pwd)/reports:/reports owasp_scanner https://example.com
 ```
 
-**Available Modes:**
-- `--full` - Complete scan (recon + enum + OWASP)
-- `--recon` - Reconnaissance only
-- `--enum` - Directory enumeration only
-- `--owasp` - OWASP vulnerability scan only
+---
 
-**Documentation:**
-- [🚀 Quick Start Guide](QUICK_START.md) - Get started in 5 minutes
-- [📖 Complete Bug Bounty Guide](BUG_BOUNTY_GUIDE.md) - Comprehensive usage
+## 💻 Usage
 
-## 💻 Usage Examples
+### Basic Scans
 
-### Basic Scan
+#### 1. Scan with OWASP 2025 (Recommended)
+
 ```bash
-python scanner.py https://example.com
-```
-Performs comprehensive OWASP Top 10 scan and generates HTML report.
+# Basic scan
+python3 scanner2025.py https://example.com
 
-### Scan with JSON Output
-```bash
-python scanner.py https://example.com -o report.json --format json
-```
-Perfect for CI/CD integration and automated processing.
+# Generate HTML report (default)
+python3 scanner2025.py https://example.com -o my_report.html
 
-### Comprehensive Scan with Subdomains
-```bash
-python scanner.py https://example.com -s --max-subdomains 20 -t 10
+# Verbose mode (see detailed scan progress)
+python3 scanner2025.py https://example.com -v
 ```
-Discovers and scans up to 20 subdomains using 10 concurrent threads.
 
-### Generate All Report Formats
-```bash
-python scanner.py https://example.com --all-formats
-```
-Creates HTML, JSON, and text reports simultaneously.
+#### 2. Scan with OWASP 2021 (Legacy)
 
-### Verbose Mode for Debugging
 ```bash
-python scanner.py https://example.com -v
+# Basic scan with 2021 categories
+python3 scanner.py https://example.com
+
+# Include SSRF detection (2021-specific)
+python3 scanner.py https://example.com -v
 ```
-Shows detailed debug information during the scan.
+
+### Advanced Scans
+
+#### Multiple Report Formats
+
+```bash
+# Generate all formats (HTML, JSON, Text)
+python3 scanner2025.py https://example.com --all-formats
+
+# JSON output for CI/CD
+python3 scanner2025.py https://example.com -f json -o results.json
+
+# Text output for quick review
+python3 scanner2025.py https://example.com -f text -o report.txt
+```
+
+#### Subdomain Scanning
+
+```bash
+# Discover and scan subdomains
+python3 scanner2025.py https://example.com -s
+
+# Limit subdomain count
+python3 scanner2025.py https://example.com -s --max-subdomains 20
+
+# Faster scanning with more threads
+python3 scanner2025.py https://example.com -s -t 10
+```
+
+#### Performance Tuning
+
+```bash
+# Use more threads (faster but more aggressive)
+python3 scanner2025.py https://example.com -t 10
+
+# Reduce threads (slower but gentler)
+python3 scanner2025.py https://example.com -t 2
+
+# Silent mode (no banner, minimal output)
+python3 scanner2025.py https://example.com --no-banner
+```
+
+---
+
+## 🎯 What This Scanner Actually Does
+
+### ✅ **REAL Vulnerabilities It WILL Find:**
+
+1. **Exposed Sensitive Files**
+   - `.env` files with credentials
+   - `.git` directories
+   - `package.json`, `composer.json`, `requirements.txt`
+   - Configuration files (`web.config`, `config.php`)
+   - Backup files (`.bak`, `.old`)
+
+2. **Security Misconfigurations**
+   - Missing security headers (HSTS, CSP, X-Frame-Options)
+   - Directory listing enabled
+   - Server version disclosure
+   - Debug mode enabled in production
+   - Default error pages
+
+3. **Cryptographic Issues**
+   - HTTP instead of HTTPS
+   - Outdated SSL/TLS protocols (TLS 1.0, TLS 1.1)
+   - Mixed content (HTTP resources on HTTPS pages)
+   - Cookies without Secure/HttpOnly/SameSite flags
+
+4. **Supply Chain Vulnerabilities**
+   - Exposed package manifests
+   - Missing Subresource Integrity (SRI) on CDN resources
+   - Vulnerable/outdated JavaScript libraries (jQuery 1.x, AngularJS)
+   - Insecure CDN usage
+
+5. **Authentication Issues**
+   - Session tokens in URLs
+   - Missing account lockout mechanisms
+   - No MFA/2FA indicators
+   - Weak session management
+
+6. **Information Disclosure**
+   - Stack traces exposed to users
+   - Database error messages
+   - Framework-specific errors (Django, Laravel, ASP.NET)
+   - File paths and internal IPs disclosed
+
+7. **Access Control Issues**
+   - Accessible admin panels without authentication
+   - IDOR (Insecure Direct Object Reference) indicators
+   - Dangerous HTTP methods enabled (PUT, DELETE)
+
+8. **Design Flaws**
+   - Missing rate limiting
+   - No CAPTCHA on sensitive forms
+   - Price values in hidden form fields
+   - GET requests on state-changing operations
+
+---
+
+## ⚠️ Important Limitations
+
+### What This Scanner CANNOT Do:
+
+❌ **Complex Exploitation** - Only detects indicators, doesn't exploit vulnerabilities
+❌ **Authenticated Scanning** - Cannot test areas requiring login (without credentials)
+❌ **Deep Logic Flaws** - Cannot find complex business logic vulnerabilities
+❌ **Zero-Day Discovery** - Not designed for finding unknown vulnerabilities
+❌ **WAF Bypass** - May be blocked by Web Application Firewalls
+❌ **JavaScript Execution** - No browser rendering or JavaScript analysis
+
+### False Positives
+
+The scanner uses **pattern matching and heuristics**, which may produce false positives:
+- ✅ **Always verify findings manually**
+- ✅ **Check context before reporting**
+- ✅ **Use as a starting point, not final proof**
+
+### Ethical Use Only
+
+⚠️ **Legal Warning:** Only scan systems you own or have explicit written permission to test. Unauthorized scanning is illegal and unethical.
+
+---
+
+## 💰 Bug Bounty Hunter Mode
+
+### Features
+
+- 🔍 **Automated Reconnaissance** - Technology detection, endpoint discovery
+- 📂 **Directory Enumeration** - Dirbuster-style path discovery
+- 🛡️ **OWASP Top 10:2025** - Complete vulnerability scanning
+- 💰 **Bounty Estimation** - CVSS scoring aligned with program tiers
+- 📊 **Professional Reports** - Ready-to-submit to Intigriti, HackerOne, BugCrowd
+
+### Quick Start
+
+```bash
+# Full bug bounty scan
+python3 bounty_hunter.py https://target.com --full --bounty-report
+
+# Reconnaissance only
+python3 bounty_hunter.py https://target.com --recon
+
+# Directory enumeration
+python3 bounty_hunter.py https://target.com --enum
+
+# OWASP scan only
+python3 bounty_hunter.py https://target.com --owasp
+
+# Parse bug bounty program scope
+python3 program_parser.py --file program.txt --output scope.json
+```
+
+### Sample Output
+
+```
+🎯 Bug Bounty Scan Results
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔴 CRITICAL [Estimated: $500-$1,500]
+   [SQL Injection] Database error exposed at /api/users?id=1'
+   CVSS: 9.8 | Tier: P1
+
+🟠 HIGH [Estimated: $200-$800]
+   [Exposed .env file] Credentials at https://target.com/.env
+   CVSS: 8.2 | Tier: P2
+
+📊 Summary: 2 Critical, 5 High, 8 Medium, 3 Low
+💰 Estimated Bounty Range: $1,200 - $3,500
+```
+
+[📖 Complete Bug Bounty Guide](BUG_BOUNTY_GUIDE.md)
+
+---
 
 ## 📖 Command Line Options
 
-```
-usage: scanner.py [-h] [-o OUTPUT] [-f {html,json,text}] [-s]
-                  [-m MAX_SUBDOMAINS] [-t THREADS] [--all-formats]
-                  [-v] [--no-banner] url
+### OWASP 2025 Scanner (`scanner2025.py`)
 
-OWASP Top 10 Automated Web Vulnerability Scanner
+```
+usage: scanner2025.py [-h] [-o OUTPUT] [-f {html,json,text}] [-s]
+                     [-m MAX_SUBDOMAINS] [-t THREADS] [--all-formats]
+                     [-v] [--no-banner] url
 
 positional arguments:
   url                   Target URL to scan (e.g., https://example.com)
 
 optional arguments:
-  -h, --help            show this help message and exit
+  -h, --help            Show this help message and exit
   -o OUTPUT, --output OUTPUT
-                        Output file for the report
+                        Output file for the report (default: auto-generated)
   -f {html,json,text}, --format {html,json,text}
                         Report format (default: html)
   -s, --subdomains      Discover and scan subdomains
@@ -230,14 +383,144 @@ optional arguments:
                         Maximum number of subdomains to scan (default: 50)
   -t THREADS, --threads THREADS
                         Number of concurrent threads (default: 5)
-  --all-formats         Generate reports in all formats
-  -v, --verbose         Enable verbose output
-  --no-banner           Disable banner display
+  --all-formats         Generate reports in all formats (HTML, JSON, Text)
+  -v, --verbose         Enable verbose output (detailed scan progress)
+  --no-banner           Disable ASCII banner display
 ```
+
+### Bug Bounty Hunter (`bounty_hunter.py`)
+
+```
+usage: bounty_hunter.py [-h] [--full] [--recon] [--enum] [--owasp]
+                       [--bounty-report] [--program PROGRAM]
+                       [-o OUTPUT] [-v] url
+
+positional arguments:
+  url                   Target URL to scan
+
+optional arguments:
+  -h, --help            Show this help message and exit
+  --full                Full scan (recon + enum + OWASP)
+  --recon               Reconnaissance only
+  --enum                Directory enumeration only
+  --owasp               OWASP vulnerability scan only
+  --bounty-report       Generate bug bounty report with CVSS + estimates
+  --program PROGRAM     Bug bounty program name
+  -o OUTPUT, --output OUTPUT
+                        Output file for report
+  -v, --verbose         Enable verbose output
+```
+
+---
+
+## 🔄 CI/CD Integration
+
+### GitHub Actions
+
+```yaml
+name: Security Scan
+
+on: [push, pull_request]
+
+jobs:
+  security-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          cd owasp_scanner
+          pip install -r requirements.txt
+
+      - name: Run OWASP 2025 security scan
+        run: |
+          cd owasp_scanner
+          python3 scanner2025.py ${{ secrets.TARGET_URL }} \
+            --format json -o scan-results.json
+
+      - name: Upload results
+        uses: actions/upload-artifact@v2
+        with:
+          name: security-scan-results
+          path: owasp_scanner/scan-results.json
+
+      - name: Fail on critical issues
+        run: |
+          cd owasp_scanner
+          python3 -c "
+          import json
+          with open('scan-results.json') as f:
+              data = json.load(f)
+              if data.get('critical_count', 0) > 0:
+                  exit(1)
+          "
+```
+
+### GitLab CI
+
+```yaml
+security_scan:
+  image: python:3.9
+  script:
+    - cd owasp_scanner
+    - pip install -r requirements.txt
+    - python3 scanner2025.py https://staging.example.com \
+        --format json -o results.json
+  artifacts:
+    paths:
+      - owasp_scanner/results.json
+    expire_in: 1 week
+  only:
+    - schedules
+```
+
+### Jenkins Pipeline
+
+```groovy
+pipeline {
+    agent any
+
+    stages {
+        stage('Security Scan') {
+            steps {
+                sh '''
+                    cd owasp_scanner
+                    pip3 install -r requirements.txt
+                    python3 scanner2025.py ${TARGET_URL} \
+                        --format json -o results.json
+                '''
+            }
+        }
+
+        stage('Publish Results') {
+            steps {
+                archiveArtifacts artifacts: 'owasp_scanner/results.json'
+                publishHTML([
+                    allowMissing: false,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: 'owasp_scanner',
+                    reportFiles: 'scan_report_*.html',
+                    reportName: 'Security Scan Report'
+                ])
+            }
+        }
+    }
+}
+```
+
+---
 
 ## 📊 Sample Report Output
 
 ### Console Output
+
 ```
 ╔══════════════════════════════════════════════════════════════════════╗
 ║                                                                      ║
@@ -248,8 +531,8 @@ optional arguments:
 ║   ██║ ╚████║╚███╔███╔╝██║  ██║███████║██║                           ║
 ║   ╚═╝  ╚═══╝ ╚══╝╚══╝ ╚═╝  ╚═╝╚══════╝╚═╝                           ║
 ║                                                                      ║
-║         ⚡ AUTOMATED SECURITY SCANNER v2.0 ⚡                        ║
-║         🛡️  OWASP Top 10 2021 Vulnerability Detection               ║
+║         ⚡ AUTOMATED SECURITY SCANNER v3.0 ⚡                        ║
+║         🛡️  OWASP Top 10:2025 Vulnerability Detection              ║
 ║                                                                      ║
 ╚══════════════════════════════════════════════════════════════════════╝
 
@@ -260,7 +543,7 @@ optional arguments:
 📊 Report Format: HTML
 ======================================================================
 
-🚀 Starting comprehensive OWASP Top 10 security scan...
+🚀 Starting comprehensive OWASP Top 10:2025 security scan...
 
 [████████████████████████████████████████] 100.0% | Scanning complete...
 
@@ -280,213 +563,314 @@ optional arguments:
 ```
 
 ### HTML Report Preview
+
 The HTML report includes:
-- Executive summary with risk breakdown
-- Color-coded vulnerability cards
-- Detailed findings for each OWASP category
-- Vulnerability scoring and prioritization
-- Specific remediation recommendations
-- Beautiful, professional design
+- **Executive Summary** with risk breakdown
+- **Color-coded vulnerability cards** (Critical = Red, High = Orange, Medium = Yellow, Low = Green)
+- **Detailed findings** for each OWASP category
+- **CVSS-like vulnerability scoring** and prioritization
+- **Specific evidence** (URLs, headers, error messages)
+- **Remediation recommendations** with code examples
+- **Professional design** suitable for client presentations
 
-## 🏗️ Architecture
+---
 
-### Project Structure
+## 🏗️ Project Architecture
+
+### Directory Structure
+
 ```
 owasp_scanner/
-├── scanner.py                 # Main enhanced scanner with reporting
-├── owasp_scanner.py          # Core OWASP Top 10 scanning engine
-├── main.py                   # Modular scanner entry point
-├── modules/                  # Individual vulnerability scanners
+├── scanner2025.py              # Main OWASP 2025 scanner (USE THIS)
+├── scanner.py                  # OWASP 2021 scanner (legacy)
+├── owasp_scanner.py           # Core scanning engine
+├── bounty_hunter.py           # Bug bounty hunting tool
+├── program_parser.py          # Parse bounty program scope
+├── modules/                   # Individual vulnerability scanners
 │   ├── __init__.py
 │   ├── broken_access_control.py
+│   ├── security_misconfiguration.py
+│   ├── supply_chain_failures.py        # NEW in 2025
 │   ├── cryptographic_failures.py
 │   ├── injection.py
-│   └── security_misconfiguration.py
-├── examples/                 # Usage examples
-│   └── scan_example.sh
-├── requirements.txt          # Python dependencies
-├── install.sh               # Automated installation script
-├── README.md               # This file
-└── USAGE.md               # Detailed usage guide
+│   ├── insecure_design.py
+│   ├── authentication_failures.py
+│   ├── data_integrity_failures.py
+│   ├── logging_monitoring_failures.py
+│   └── exceptional_conditions.py        # NEW in 2025
+├── requirements.txt           # Python dependencies
+├── install.sh                # Automated installer
+├── README.md                 # This file
+├── OWASP_ATTACKS_EXPLAINED.md # Educational guide
+├── OWASP_2025.md             # OWASP 2025 changes
+├── BUG_BOUNTY_GUIDE.md       # Bug bounty documentation
+└── examples/                 # Usage examples
+    ├── generic_program.txt
+    └── scan_example.sh
 ```
 
-### Modular Design
-Each OWASP Top 10 category has its own dedicated scanner module, making it easy to:
-- Extend functionality
-- Add new vulnerability checks
-- Customize for specific needs
-- Maintain and update independently
+### Modular Design Benefits
 
-## 🔧 Advanced Usage
+- ✅ **Easy to Extend** - Add new vulnerability checks
+- ✅ **Independent Updates** - Update modules without breaking others
+- ✅ **Customizable** - Enable/disable specific checks
+- ✅ **Maintainable** - Clear separation of concerns
+- ✅ **Testable** - Each module can be tested independently
 
-### CI/CD Integration
-
-#### GitHub Actions
-```yaml
-name: Security Scan
-
-on: [push, pull_request]
-
-jobs:
-  security-scan:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-
-      - name: Set up Python
-        uses: actions/setup-python@v2
-        with:
-          python-version: '3.9'
-
-      - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-
-      - name: Run security scan
-        run: |
-          python scanner.py ${{ secrets.TARGET_URL }} \
-            --format json -o scan-results.json
-
-      - name: Upload results
-        uses: actions/upload-artifact@v2
-        with:
-          name: security-scan-results
-          path: scan-results.json
-```
-
-#### GitLab CI
-```yaml
-security_scan:
-  image: python:3.9
-  script:
-    - pip install -r requirements.txt
-    - python scanner.py https://staging.example.com \
-        --format json -o results.json
-  artifacts:
-    paths:
-      - results.json
-    expire_in: 1 week
-  only:
-    - schedules
-```
-
-### Automated Periodic Scanning
-```bash
-#!/bin/bash
-# Add to cron: 0 2 * * * /path/to/weekly-scan.sh
-
-cd /path/to/owasp_scanner
-source venv/bin/activate
-
-TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-python scanner.py https://production.example.com \
-  --all-formats \
-  -o "reports/scan_${TIMESTAMP}"
-
-# Email report (optional)
-mail -s "Security Scan Report" security@example.com < "reports/scan_${TIMESTAMP}.txt"
-```
+---
 
 ## 🛠️ Troubleshooting
 
-### Common Issues
+### Common Issues and Solutions
 
-#### Issue: Module Not Found
+#### Issue: `ModuleNotFoundError: No module named 'requests'`
+
+**Solution:**
 ```bash
-# Solution: Install dependencies
-pip install -r requirements.txt
+pip3 install -r requirements.txt
+
+# If that fails, install individually:
+pip3 install requests beautifulsoup4 colorama tqdm
 ```
 
-#### Issue: Permission Denied
+#### Issue: `Permission denied: ./scanner2025.py`
+
+**Solution:**
 ```bash
-# Solution: Make scripts executable
-chmod +x scanner.py install.sh
+chmod +x scanner2025.py
+# Or run with python3 directly:
+python3 scanner2025.py https://example.com
 ```
 
 #### Issue: SSL Certificate Errors
+
+**Solution:**
 ```bash
-# The scanner handles SSL certificates automatically
-# Check DNS resolution: nslookup example.com
+# The scanner handles SSL automatically
+# If DNS issues occur:
+nslookup example.com
+
+# Try with explicit HTTPS:
+python3 scanner2025.py https://example.com
 ```
 
 #### Issue: Connection Timeouts
+
+**Solution:**
 ```bash
-# Solution: Reduce thread count
-python scanner.py https://example.com -t 3
+# Reduce thread count to be less aggressive:
+python3 scanner2025.py https://example.com -t 2
+
+# Check if site is accessible:
+curl -I https://example.com
 ```
 
-## 🔒 Security & Legal
+#### Issue: No Vulnerabilities Found
 
-### ⚠️ Important Disclaimer
-This tool is designed for:
-- ✅ Security professionals assessing their own systems
-- ✅ Authorized penetration testing engagements
-- ✅ Educational and research purposes
-- ✅ Bug bounty programs
+**Possible reasons:**
+- ✅ **Good news!** Site might be well-configured
+- 🔍 Try verbose mode: `python3 scanner2025.py https://example.com -v`
+- 🌐 Scanner can only test public endpoints (no authentication)
+- 🛡️ Site might have WAF (Web Application Firewall) blocking scans
+- 📋 Check generated report for "Low" severity findings
 
-**Unauthorized scanning is illegal and unethical.**
-
-### Best Practices
-1. **Always get written authorization** before scanning
-2. **Start with low thread counts** to avoid DoS conditions
-3. **Review automated results** for false positives
-4. **Store reports securely** - they may contain sensitive data
-5. **Complement with manual testing** for comprehensive assessment
+---
 
 ## 🤝 Contributing
 
-We welcome contributions! Here's how:
+We welcome contributions! Here's how to contribute:
 
-1. Fork the repository
-2. Create your feature branch: `git checkout -b feature/AmazingFeature`
-3. Commit your changes: `git commit -m 'Add some AmazingFeature'`
-4. Push to the branch: `git push origin feature/AmazingFeature`
-5. Open a Pull Request
+### How to Contribute
 
-### Development Setup
-```bash
-git clone https://github.com/anubhavmohandas/owasp_scanner.git
-cd owasp_scanner
-python3 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-```
+1. **Fork the repository**
+   ```bash
+   git clone https://github.com/anubhavmohandas/owasp_scanner.git
+   cd owasp_scanner
+   ```
+
+2. **Create a feature branch**
+   ```bash
+   git checkout -b feature/AmazingFeature
+   ```
+
+3. **Make your changes**
+   - Add new vulnerability checks
+   - Improve detection accuracy
+   - Fix bugs
+   - Enhance documentation
+
+4. **Test your changes**
+   ```bash
+   python3 scanner2025.py https://testsite.com -v
+   ```
+
+5. **Commit with clear messages**
+   ```bash
+   git commit -m 'feat: Add XYZ vulnerability detection'
+   ```
+
+6. **Push and create Pull Request**
+   ```bash
+   git push origin feature/AmazingFeature
+   ```
+
+### Development Guidelines
+
+- ✅ Follow PEP 8 style guide
+- ✅ Add comments for complex logic
+- ✅ Include detection examples
+- ✅ Update documentation
+- ✅ Test against multiple targets
+- ✅ Avoid false positives
+
+### Ideas for Contributions
+
+- 🆕 Add new vulnerability checks
+- 🎯 Improve detection accuracy
+- 📊 Enhance report formatting
+- 🌐 Add multi-language support
+- 🔧 Create additional integrations
+- 📚 Improve documentation
+
+---
+
+## 🔒 Security & Legal
+
+### ⚠️ IMPORTANT DISCLAIMER
+
+This tool is designed for **AUTHORIZED SECURITY TESTING ONLY**:
+
+✅ **Legal Uses:**
+- Your own systems and applications
+- Client systems with written authorization
+- Bug bounty programs (within scope)
+- Educational and research purposes
+- Penetration testing engagements
+- Security audits with permission
+
+❌ **Illegal Uses:**
+- Scanning systems without permission
+- Unauthorized vulnerability testing
+- Violating terms of service
+- Exceeding authorized scope
+- Malicious intent
+
+### Legal Warning
+
+**Unauthorized scanning is illegal under laws including:**
+- Computer Fraud and Abuse Act (CFAA) - USA
+- Computer Misuse Act - UK
+- Similar laws in most countries
+
+**You could face:**
+- Criminal charges
+- Lawsuits and damages
+- Fines and penalties
+- Imprisonment
+
+### Ethical Use Best Practices
+
+1. ✅ **Always get written authorization** before scanning
+2. ✅ **Stay within authorized scope** defined in agreements
+3. ✅ **Start with low thread counts** to avoid DoS
+4. ✅ **Review results manually** for false positives
+5. ✅ **Store reports securely** - they contain sensitive data
+6. ✅ **Report responsibly** - follow disclosure policies
+7. ✅ **Respect rate limits** and robots.txt
+8. ✅ **Document your testing** - timestamp and scope
+
+### Responsible Disclosure
+
+If you find vulnerabilities using this tool:
+- 📧 Report to the organization's security team
+- ⏰ Give reasonable time to fix (typically 90 days)
+- 🤝 Coordinate disclosure timing
+- 📝 Provide clear reproduction steps
+- 💰 Follow bug bounty program rules
+
+---
 
 ## 📚 Documentation
 
-- [Usage Guide](USAGE.md) - Comprehensive usage documentation
-- [Examples](examples/) - Example scripts and use cases
-- [API Documentation](docs/API.md) - For developers extending the scanner
+- [📖 OWASP Attacks Explained](OWASP_ATTACKS_EXPLAINED.md) - Educational guide for students
+- [🆕 OWASP 2025 Changes](OWASP_2025.md) - What's new in 2025
+- [💰 Bug Bounty Guide](BUG_BOUNTY_GUIDE.md) - Complete bounty hunting guide
+- [🚀 Quick Start Guide](QUICK_START.md) - Get started in 5 minutes
+- [🔧 API Documentation](docs/API.md) - For developers extending the scanner
+
+---
 
 ## 🔄 Changelog
 
-### Version 2.0 (Current)
-- ✨ Complete OWASP Top 10 2021 coverage
-- ✨ Enhanced HTML reporting with beautiful UI
-- ✨ Vulnerability scoring and prioritization
-- ✨ Progress tracking
-- ✨ Multiple output formats (HTML, JSON, Text)
-- ✨ Improved subdomain discovery
-- ✨ Modular architecture
+### Version 3.0 (Current - OWASP 2025)
+- ✨ Full OWASP Top 10:2025 support
+- ✨ New Supply Chain Failures scanner
+- ✨ New Exceptional Conditions scanner
+- ✨ Enhanced reporting with CVSS scoring
+- ✨ Bug bounty hunting mode
+- ✨ Improved vulnerability detection accuracy
+- ✨ Better false positive reduction
 
-### Version 1.0
-- Initial release with basic scanning capabilities
+### Version 2.0 (OWASP 2021)
+- ✨ Complete OWASP Top 10:2021 coverage
+- ✨ HTML/JSON/Text reporting
+- ✨ Subdomain discovery
+- ✨ Modular architecture
+- ✨ Progress tracking
+
+### Version 1.0 (Initial Release)
+- Basic OWASP scanning
+- Command-line interface
+- Simple text output
+
+---
 
 ## 📞 Support & Contact
 
-- **Issues**: [GitHub Issues](https://github.com/anubhavmohandas/owasp_scanner/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/anubhavmohandas/owasp_scanner/discussions)
-- **Security**: For security concerns, please email security@anubhavmohandas.com
+### Getting Help
+
+- 🐛 **Bug Reports**: [GitHub Issues](https://github.com/anubhavmohandas/owasp_scanner/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/anubhavmohandas/owasp_scanner/discussions)
+- 📧 **Email**: security@anubhavmohandas.com
+- 📖 **Documentation**: Check the `docs/` folder
+
+### Community
+
+- ⭐ Star this repository if you find it helpful!
+- 🍴 Fork and contribute
+- 📢 Share with security community
+- 💬 Join discussions
+
+---
 
 ## 🌟 Acknowledgments
 
-- OWASP Foundation for security guidelines
-- Security researchers and contributors
-- Open source security community
+- **OWASP Foundation** for security guidelines and research
+- **Security researchers** and contributors worldwide
+- **Open source community** for libraries and tools
+- **Bug bounty hunters** for feedback and suggestions
+
+### Built With
+
+- [Python](https://www.python.org/) - Core language
+- [Requests](https://requests.readthedocs.io/) - HTTP library
+- [Beautiful Soup](https://www.crummy.com/software/BeautifulSoup/) - HTML parsing
+- [Colorama](https://pypi.org/project/colorama/) - Terminal colors
+- [TQDM](https://github.com/tqdm/tqdm) - Progress bars
+
+---
 
 ## 📜 License
 
 This project is open source and available for educational and authorized security testing purposes.
+
+**License**: MIT License (See LICENSE file)
+
+**Attribution**: If you use this tool in your research or publications, please cite:
+```
+Anubhav Mohandas (2024). OWASP Top 10 Automated Security Scanner.
+https://github.com/anubhavmohandas/owasp_scanner
+```
 
 ---
 
@@ -494,10 +878,59 @@ This project is open source and available for educational and authorized securit
 
 **Made with ❤️ by [Anubhav Mohandas](https://github.com/anubhavmohandas)**
 
-⭐ Star this repository if you find it helpful!
+⭐ **Star this repository if you find it helpful!** ⭐
 
 [Report Bug](https://github.com/anubhavmohandas/owasp_scanner/issues) ·
 [Request Feature](https://github.com/anubhavmohandas/owasp_scanner/issues) ·
-[Documentation](USAGE.md)
+[Documentation](docs/)
+
+---
+
+### 🚨 Remember: With great power comes great responsibility 🚨
+
+**Only scan systems you own or have explicit permission to test.**
 
 </div>
+
+---
+
+## 📈 Statistics
+
+- **Lines of Code**: 5,000+
+- **Vulnerability Checks**: 150+
+- **OWASP Categories**: 10 (2025) + 10 (2021)
+- **Report Formats**: 3 (HTML, JSON, Text)
+- **Active Contributors**: Growing community
+
+---
+
+## 🎯 Roadmap
+
+### Planned Features
+
+- [ ] **GUI Interface** - Web-based dashboard
+- [ ] **Docker Support** - Containerized deployment
+- [ ] **API Endpoints** - RESTful API for integration
+- [ ] **Database Support** - Store scan history
+- [ ] **Scheduled Scans** - Automated periodic scanning
+- [ ] **Email Alerts** - Notification on critical findings
+- [ ] **Custom Plugins** - User-defined vulnerability checks
+- [ ] **Authenticated Scanning** - Login and scan protected areas
+- [ ] **OWASP ASVS** - Application Security Verification Standard
+- [ ] **CWE Mapping** - Common Weakness Enumeration
+
+### Future Enhancements
+
+- 🌐 Multi-language support (Spanish, French, German, Chinese)
+- 📱 Mobile app for iOS/Android
+- 🔌 Browser extension
+- 🤖 AI-powered vulnerability detection
+- 📊 Advanced analytics and trends
+- 🔗 Integration with SIEM tools
+
+---
+
+**Last Updated**: 2025-12-03
+**Version**: 3.0
+**OWASP Version**: 2025
+
