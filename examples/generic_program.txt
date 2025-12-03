@@ -1,0 +1,31 @@
+Generic Bug Bounty Program
+
+Description
+This is a sample bug bounty program for testing the automated scanner.
+The program accepts vulnerability reports for web applications and APIs.
+
+We encourage responsible disclosure and professional security research.
+Please test only on authorized targets and do not disrupt services.
+
+Scope
+- Web applications at https://app.example.com
+- API endpoints at https://api.example.com
+- Mobile app backends
+
+Out of Scope
+- Third-party services
+- Social engineering
+- Denial of service attacks
+- Physical security testing
+
+Bounties
+Low      0.1 - 3.9
+Medium   4.0 - 6.9
+High     7.0 - 8.9
+Critical 9.0 - 10.0
+
+Rewards
+Low       $100
+Medium    $500
+High      $1,500
+Critical  $5,000

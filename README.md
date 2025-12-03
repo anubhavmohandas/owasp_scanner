@@ -1,11 +1,40 @@
 # 🛡️ OWASP Top 10 Automated Security Scanner
 
 ![OWASP Security Scanner](https://img.shields.io/badge/OWASP-Top%2010%20Scanner-blue)
+![OWASP 2025](https://img.shields.io/badge/OWASP-2025%20Ready-brightgreen)
+![Bug Bounty](https://img.shields.io/badge/Bug%20Bounty-Ready-gold)
 ![Python 3.7+](https://img.shields.io/badge/Python-3.7%2B-green)
-![Version](https://img.shields.io/badge/Version-2.0-orange)
+![Version](https://img.shields.io/badge/Version-3.0-orange)
 ![License](https://img.shields.io/badge/License-Open%20Source-yellow)
 
-A **comprehensive, automated web application security scanner** based on OWASP Top 10 2021 guidelines. This professional-grade tool helps identify critical security vulnerabilities in web applications with detailed reporting and remediation guidance.
+A **comprehensive, automated web application security scanner** supporting **OWASP Top 10:2025** (latest) and OWASP Top 10:2021. This professional-grade tool helps identify critical security vulnerabilities in web applications with detailed reporting and remediation guidance.
+
+## 🎯 NEW: Bug Bounty Hunter Mode!
+
+**Automated bug bounty hunting platform** that combines OWASP scanning with reconnaissance, directory enumeration, and ready-to-submit vulnerability reports!
+
+```bash
+# Full bug bounty scan with automated reporting
+python bounty_hunter.py https://target.com --full --bounty-report
+```
+
+Features:
+- 🔍 **Automated Reconnaissance** - Tech detection, endpoint discovery
+- 📂 **Directory Enumeration** - Dirbuster-style path discovery
+- 🛡️ **OWASP Top 10:2025** - Complete vulnerability scanning
+- 💰 **Bounty Estimation** - CVSS scoring aligned with program tiers
+- 📊 **Professional Reports** - Ready-to-submit to Intigriti, HackerOne, etc.
+
+[📖 Bug Bounty Hunter Guide](BUG_BOUNTY_GUIDE.md) | [🎯 Quick Start](#bug-bounty-quick-start)
+
+## 🎉 Now Supporting OWASP Top 10:2025!
+
+✨ **NEW**: Full support for OWASP Top 10:2025 categories including:
+- **A03:2025** - Software Supply Chain Failures (NEW)
+- **A10:2025** - Mishandling of Exceptional Conditions (NEW)
+- Updated prioritization with Security Misconfiguration at #2
+
+[📖 Read about OWASP 2025 Changes](OWASP_2025.md)
 
 ## ✨ Key Features
 
@@ -75,18 +104,76 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Make scanner executable
-chmod +x scanner.py
+# Make scanners executable
+chmod +x scanner.py scanner2025.py
 ```
+
+### Scanner Selection
+
+**Choose the right scanner for your needs:**
+
+#### OWASP Top 10:2025 (Recommended)
+```bash
+python scanner2025.py https://example.com
+```
+- Latest OWASP categories
+- Includes Supply Chain Failures detection
+- Includes Exception Handling analysis
+- Updated priority ordering
+
+#### OWASP Top 10:2021 (Legacy)
+```bash
+python scanner.py https://example.com
+```
+- Original 2021 categories
+- Includes SSRF detection
+- Stable and well-tested
 
 ### First Scan
 ```bash
 # Activate virtual environment (if not already activated)
 source venv/bin/activate
 
-# Run your first scan
+# Run your first scan with OWASP 2025 (recommended)
+python scanner2025.py https://example.com
+
+# Or use OWASP 2021
 python scanner.py https://example.com
 ```
+
+### Bug Bounty Quick Start
+
+```bash
+# 1. Parse bug bounty program
+python program_parser.py --file examples/generic_program.txt --output program.json
+
+# 2. Run comprehensive bug bounty scan
+python bounty_hunter.py https://target.com \
+  --full \
+  --program "Bug Bounty Program" \
+  --bounty-report \
+  -o bounty_report.txt
+
+# 3. Review findings
+cat bounty_report.txt
+
+# Report includes:
+# - Severity levels mapped to program tiers
+# - CVSS scores and bounty estimates
+# - Reproduction steps
+# - Impact descriptions
+# - Ready for submission to bug bounty platforms
+```
+
+**Available Modes:**
+- `--full` - Complete scan (recon + enum + OWASP)
+- `--recon` - Reconnaissance only
+- `--enum` - Directory enumeration only
+- `--owasp` - OWASP vulnerability scan only
+
+**Documentation:**
+- [🚀 Quick Start Guide](QUICK_START.md) - Get started in 5 minutes
+- [📖 Complete Bug Bounty Guide](BUG_BOUNTY_GUIDE.md) - Comprehensive usage
 
 ## 💻 Usage Examples
 
