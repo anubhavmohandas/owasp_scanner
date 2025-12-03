@@ -1,11 +1,21 @@
 # 🛡️ OWASP Top 10 Automated Security Scanner
 
 ![OWASP Security Scanner](https://img.shields.io/badge/OWASP-Top%2010%20Scanner-blue)
+![OWASP 2025](https://img.shields.io/badge/OWASP-2025%20Ready-brightgreen)
 ![Python 3.7+](https://img.shields.io/badge/Python-3.7%2B-green)
-![Version](https://img.shields.io/badge/Version-2.0-orange)
+![Version](https://img.shields.io/badge/Version-2.1-orange)
 ![License](https://img.shields.io/badge/License-Open%20Source-yellow)
 
-A **comprehensive, automated web application security scanner** based on OWASP Top 10 2021 guidelines. This professional-grade tool helps identify critical security vulnerabilities in web applications with detailed reporting and remediation guidance.
+A **comprehensive, automated web application security scanner** supporting **OWASP Top 10:2025** (latest) and OWASP Top 10:2021. This professional-grade tool helps identify critical security vulnerabilities in web applications with detailed reporting and remediation guidance.
+
+## 🎉 Now Supporting OWASP Top 10:2025!
+
+✨ **NEW**: Full support for OWASP Top 10:2025 categories including:
+- **A03:2025** - Software Supply Chain Failures (NEW)
+- **A10:2025** - Mishandling of Exceptional Conditions (NEW)
+- Updated prioritization with Security Misconfiguration at #2
+
+[📖 Read about OWASP 2025 Changes](OWASP_2025.md)
 
 ## ✨ Key Features
 
@@ -75,16 +85,40 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Make scanner executable
-chmod +x scanner.py
+# Make scanners executable
+chmod +x scanner.py scanner2025.py
 ```
+
+### Scanner Selection
+
+**Choose the right scanner for your needs:**
+
+#### OWASP Top 10:2025 (Recommended)
+```bash
+python scanner2025.py https://example.com
+```
+- Latest OWASP categories
+- Includes Supply Chain Failures detection
+- Includes Exception Handling analysis
+- Updated priority ordering
+
+#### OWASP Top 10:2021 (Legacy)
+```bash
+python scanner.py https://example.com
+```
+- Original 2021 categories
+- Includes SSRF detection
+- Stable and well-tested
 
 ### First Scan
 ```bash
 # Activate virtual environment (if not already activated)
 source venv/bin/activate
 
-# Run your first scan
+# Run your first scan with OWASP 2025 (recommended)
+python scanner2025.py https://example.com
+
+# Or use OWASP 2021
 python scanner.py https://example.com
 ```
 
