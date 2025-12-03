@@ -831,7 +831,7 @@ If you find vulnerabilities using this tool:
 
 - 🐛 **Bug Reports**: [GitHub Issues](https://github.com/anubhavmohandas/owasp_scanner/issues)
 - 💬 **Discussions**: [GitHub Discussions](https://github.com/anubhavmohandas/owasp_scanner/discussions)
-- 📧 **Email**: security@anubhavmohandas.com
+- 📧 **Email**: reachme.anubhav@gmail.com
 - 📖 **Documentation**: Check the `docs/` folder
 
 ### Community
@@ -903,7 +903,7 @@ https://github.com/anubhavmohandas/owasp_scanner
 - **Active Contributors**: Growing community
 
 ---
-
+```
 ## 🎯 Roadmap
 
 ### Planned Features
@@ -929,6 +929,7 @@ https://github.com/anubhavmohandas/owasp_scanner
 - 🔗 Integration with SIEM tools
 
 ---
+```
 
 **Last Updated**: 2025-12-03
 **Version**: 3.0
