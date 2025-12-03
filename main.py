@@ -12,12 +12,12 @@ import os
 import sys
 import argparse
 import requests
+from datetime import datetime
 from urllib.parse import urlparse
 
-# Add the module directory to the path
+# Add the modules directory to the path
 current_dir = os.path.dirname(os.path.abspath(__file__))
-module_dir = os.path.join(current_dir, 'module')
-sys.path.append(module_dir)
+sys.path.insert(0, current_dir)
 
 # Import the vulnerability scanner modules
 from modules.broken_access_control import BrokenAccessControlScanner
@@ -27,22 +27,18 @@ def validate_url(url):
     """Validate and format the input URL."""
     if not url.startswith(('http://', 'https://')):
         url = 'http://' + url
-    
+
     try:
         result = urlparse(url)
         if all([result.scheme, result.netloc]):
             return url
         return None
-    except:
+    except Exception:
         return None
+
 def get_current_time():
-    try:
-        response = requests.get('http://worldtimeapi.org/api/ip', timeout=5)
-        return response.json()['datetime']
-    except:
-        # Fallback to local time
-        from datetime import datetime
-        return str(datetime.now())
+    """Get current timestamp."""
+    return datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 def main():
     # Set up argument parser
